@@ -2,6 +2,7 @@
 
 [![Gem Version](https://img.shields.io/gem/v/spree_square.svg)](https://rubygems.org/gems/spree_square)
 [![GitHub Release](https://img.shields.io/github/v/release/amitkssolanki/spree_square)](https://github.com/amitkssolanki/spree_square/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.md)
 
 This is a Square extension for [Spree Commerce](https://spreecommerce.org), an open source e-commerce platform built with Ruby on Rails.
 
