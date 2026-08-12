@@ -1,0 +1,282 @@
+{
+  "loaded-nachos": {
+    "item": "Loaded Nachos",
+    "commons_title": "File:NACHOS - Montagues Tex Mex 2026-06-03.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/2/25/NACHOS_-_Montagues_Tex_Mex_2026-06-03.jpg",
+    "license": "CC0",
+    "artist": "Andy Li",
+    "file": "loaded-nachos.jpg"
+  },
+  "mozzarella-sticks": {
+    "item": "Mozzarella Sticks",
+    "commons_title": "File:Mozzarella Sticks at Mobtown Ballroom.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/a/a2/Mozzarella_Sticks_at_Mobtown_Ballroom.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "license": "CC BY-SA 4.0",
+    "artist": "Sdkb",
+    "file": "mozzarella-sticks.jpg"
+  },
+  "buffalo-wings": {
+    "item": "Buffalo Wings",
+    "commons_title": "File:Chicken wings at West Side Story in May 2025.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/5/55/Chicken_wings_at_West_Side_Story_in_May_2025.jpg",
+    "license": "CC BY-SA 4.0",
+    "artist": "JIP",
+    "file": "buffalo-wings.jpg"
+  },
+  "spinach-artichoke-dip": {
+    "item": "Spinach Artichoke Dip",
+    "commons_title": "File:Spinach Dip and Raw Vegetables (49164480716).jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/5/5f/Spinach_Dip_and_Raw_Vegetables_%2849164480716%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "license": "CC0",
+    "artist": "Alabama Extension",
+    "file": "spinach-artichoke-dip.jpg"
+  },
+  "onion-rings": {
+    "item": "Onion Rings",
+    "commons_title": "File:Onion rings - Honest Burgers 2025-07-21.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/f/f9/Onion_rings_-_Honest_Burgers_2025-07-21.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "license": "CC0",
+    "artist": "Andy Li",
+    "file": "onion-rings.jpg"
+  },
+  "caesar-salad": {
+    "item": "Caesar Salad",
+    "commons_title": "File:Chicken Caesar Salad - Amo 2026-04-11.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/3/38/Chicken_Caesar_Salad_-_Amo_2026-04-11.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "license": "CC0",
+    "artist": "Andy Li",
+    "file": "caesar-salad.jpg"
+  },
+  "greek-salad": {
+    "item": "Greek Salad",
+    "commons_title": "File:Greek Salad from Thessaloniki.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/7/7a/Greek_Salad_from_Thessaloniki.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "license": "CC BY-SA 4.0",
+    "artist": "Armineaghayan",
+    "file": "greek-salad.jpg"
+  },
+  "cobb-salad": {
+    "item": "Cobb Salad",
+    "commons_title": "File:Cobb salad from Silver Diner.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/8/89/Cobb_salad_from_Silver_Diner.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "license": "CC BY-SA 4.0",
+    "artist": "Ser Amantio di Nicolao",
+    "file": "cobb-salad.jpg"
+  },
+  "house-garden-salad": {
+    "item": "House Garden Salad",
+    "commons_title": "File:Small Salad Bowl - One Market, One Garden Brighton 2025-04-02.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/1/1e/Small_Salad_Bowl_-_One_Market%2C_One_Garden_Brighton_2025-04-02.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "license": "CC0",
+    "artist": "Andy Li",
+    "file": "house-garden-salad.jpg"
+  },
+  "southwest-chicken-salad": {
+    "item": "Southwest Chicken Salad",
+    "commons_title": "File:Chicken Cobb Salad - PINSTACK Plano (2015-04-10 19.42.14 by Nan Palmero).jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/9/90/Chicken_Cobb_Salad_-_PINSTACK_Plano_%282015-04-10_19.42.14_by_Nan_Palmero%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "license": "CC BY 2.0",
+    "artist": "Nan Palmero from San Antonio, TX, USA",
+    "file": "southwest-chicken-salad.jpg"
+  },
+  "classic-cheeseburger": {
+    "item": "Classic Cheeseburger",
+    "commons_title": "File:Bacon cheeseburger made in Germany (26605290237).jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/4/45/Bacon_cheeseburger_made_in_Germany_%2826605290237%29.jpg",
+    "license": "CC BY-SA 2.0",
+    "artist": "Stefan Muth from Endingen Am Kaiserstuhl, Deutschland",
+    "file": "classic-cheeseburger.jpg"
+  },
+  "bacon-bbq-burger": {
+    "item": "Bacon BBQ Burger",
+    "commons_title": "File:Cheeseburger and Fries.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/2/22/Cheeseburger_and_Fries.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "license": "CC0",
+    "artist": "Kurt Kaiser",
+    "file": "bacon-bbq-burger.jpg"
+  },
+  "grilled-chicken-sandwich": {
+    "item": "Grilled Chicken Sandwich",
+    "commons_title": "File:McDonald's Grilled Chicken Burger.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/1/1d/McDonald%27s_Grilled_Chicken_Burger.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "license": "CC BY-SA 4.0",
+    "artist": "Ceeseven",
+    "file": "grilled-chicken-sandwich.jpg"
+  },
+  "veggie-burger": {
+    "item": "Veggie Burger",
+    "commons_title": "File:Veggie burger on plate (Unsplash).jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/8/81/Veggie_burger_on_plate_%28Unsplash%29.jpg",
+    "license": "CC0",
+    "artist": "Markus Spiske markusspiske",
+    "file": "veggie-burger.jpg"
+  },
+  "philly-cheesesteak": {
+    "item": "Philly Cheesesteak",
+    "commons_title": "File:Cheesesteak (19386149993).jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/3/34/Cheesesteak_%2819386149993%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "license": "CC BY 2.0",
+    "artist": "jeffreyw",
+    "file": "philly-cheesesteak.jpg"
+  },
+  "grilled-salmon": {
+    "item": "Grilled Salmon",
+    "commons_title": "File:Grilled plated salmon fillet.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/f/f1/Grilled_plated_salmon_fillet.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "license": "CC0",
+    "artist": "DanaTentis",
+    "file": "grilled-salmon.jpg"
+  },
+  "ribeye-steak": {
+    "item": "Ribeye Steak",
+    "commons_title": "File:Ribeye Steak with Mashed Potato and Vegetable.JPG",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/8/85/Ribeye_Steak_with_Mashed_Potato_and_Vegetable.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "license": "CC BY-SA 4.0",
+    "artist": "Ceeseven",
+    "file": "ribeye-steak.jpg"
+  },
+  "chicken-parmesan": {
+    "item": "Chicken Parmesan",
+    "commons_title": "File:Mamma Tanino's - November 2024 - Sarah Stierch 08.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/2/2e/Mamma_Tanino%27s_-_November_2024_-_Sarah_Stierch_08.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "license": "CC0",
+    "artist": "Missvain",
+    "file": "chicken-parmesan.jpg"
+  },
+  "fish-and-chips": {
+    "item": "Fish and Chips",
+    "commons_title": "File:Fish and chips blackpool.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/f/ff/Fish_and_chips_blackpool.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "license": "CC BY-SA 4.0",
+    "artist": "Matthias Meckel",
+    "file": "fish-and-chips.jpg"
+  },
+  "vegetable-stir-fry": {
+    "item": "Vegetable Stir Fry",
+    "commons_title": "File:Veggie Stirfry in the pan.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/8/85/Veggie_Stirfry_in_the_pan.jpg",
+    "license": "CC BY-SA 4.0",
+    "artist": "Robert Loescher",
+    "file": "vegetable-stir-fry.jpg"
+  },
+  "french-fries": {
+    "item": "French Fries",
+    "commons_title": "File:Truffle oil french fries (33024792848).jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/8/8e/Truffle_oil_french_fries_%2833024792848%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "license": "CC BY-SA 2.0",
+    "artist": "Tony Webster from Minneapolis, Minnesota, United States",
+    "file": "french-fries.jpg"
+  },
+  "sweet-potato-fries": {
+    "item": "Sweet Potato Fries",
+    "commons_title": "File:Sweet Potato Fries 2.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/0/00/Sweet_Potato_Fries_2.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "license": "CC0",
+    "artist": "Kurtkaiser",
+    "file": "sweet-potato-fries.jpg"
+  },
+  "mashed-potatoes": {
+    "item": "Mashed Potatoes",
+    "commons_title": "File:Whole Foods mashed potatoes - November 2023 - Sarah Stierch.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/5/51/Whole_Foods_mashed_potatoes_-_November_2023_-_Sarah_Stierch.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "license": "CC BY 4.0",
+    "artist": "Missvain",
+    "file": "mashed-potatoes.jpg"
+  },
+  "steamed-vegetables": {
+    "item": "Steamed Vegetables",
+    "commons_title": "File:Sunday roast vegetable side dish at The Stag, Little Easton, Essex, England.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/8/8f/Sunday_roast_vegetable_side_dish_at_The_Stag%2C_Little_Easton%2C_Essex%2C_England.jpg",
+    "license": "CC BY-SA 4.0",
+    "artist": "Acabashi",
+    "file": "steamed-vegetables.jpg"
+  },
+  "mac-and-cheese": {
+    "item": "Mac and Cheese",
+    "commons_title": "File:PXL 20221215 231825450 macaroni and cheese and green beans and mashed potatoes.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/b/bc/PXL_20221215_231825450_macaroni_and_cheese_and_green_beans_and_mashed_potatoes.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "license": "CC BY-SA 4.0",
+    "artist": "WalkingRadiance",
+    "file": "mac-and-cheese.jpg"
+  },
+  "chocolate-lava-cake": {
+    "item": "Chocolate Lava Cake",
+    "commons_title": "File:Vegan Flourless Swiss Chocolate Molten Lava Cake (4865230778).jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/5/5a/Vegan_Flourless_Swiss_Chocolate_Molten_Lava_Cake_%284865230778%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "license": "CC BY 2.0",
+    "artist": "Vegan Feast Catering",
+    "file": "chocolate-lava-cake.jpg"
+  },
+  "new-york-cheesecake": {
+    "item": "New York Cheesecake",
+    "commons_title": "File:Chestnut Basque Cheesecake - MOGUMOGU 2024-11-02.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/e/ee/Chestnut_Basque_Cheesecake_-_MOGUMOGU_2024-11-02.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "license": "CC0",
+    "artist": "Andy Li",
+    "file": "new-york-cheesecake.jpg"
+  },
+  "apple-pie": {
+    "item": "Apple Pie",
+    "commons_title": "File:Heirloom Apple Pie.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/4/4a/Heirloom_Apple_Pie.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "license": "CC BY-SA 2.0",
+    "artist": "Edsel Little",
+    "file": "apple-pie.jpg"
+  },
+  "ice-cream-sundae": {
+    "item": "Ice Cream Sundae",
+    "commons_title": "File:Strawberry Ice Cream Sundae (TheatreCaf\u00e9 C's).jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/6/60/Strawberry_Ice_Cream_Sundae_%28TheatreCaf%C3%A9_C%27s%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "license": "CC BY-SA 4.0",
+    "artist": "\u63ac\u8336",
+    "file": "ice-cream-sundae.jpg"
+  },
+  "brownie-a-la-mode": {
+    "item": "Brownie a la Mode",
+    "commons_title": "File:BROWNIE WITH ICE CREAM - ZUKA, CHENNAI.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/1/12/BROWNIE_WITH_ICE_CREAM_-_ZUKA%2C_CHENNAI.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "license": "CC BY-SA 4.0",
+    "artist": "Yoga Jaganathan",
+    "file": "brownie-a-la-mode.jpg"
+  },
+  "fountain-soda": {
+    "item": "Fountain Soda",
+    "commons_title": "File:Coca-Cola at restaurant Fylla's.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/6/68/Coca-Cola_at_restaurant_Fylla%27s.jpg",
+    "license": "CC BY-SA 4.0",
+    "artist": "JIP",
+    "file": "fountain-soda.jpg"
+  },
+  "iced-tea": {
+    "item": "Iced Tea",
+    "commons_title": "File:Iced Tea with Lemon, First Watch, Melbourne, Florida.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/c/ca/Iced_Tea_with_Lemon%2C_First_Watch%2C_Melbourne%2C_Florida.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "license": "CC BY 4.0",
+    "artist": "Pokemonprime",
+    "file": "iced-tea.jpg"
+  },
+  "lemonade": {
+    "item": "Lemonade",
+    "commons_title": "File:Homemade lemonade at restaurant Visums, Riga.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/f/f2/Homemade_lemonade_at_restaurant_Visums%2C_Riga.jpg",
+    "license": "CC BY-SA 4.0",
+    "artist": "JIP",
+    "file": "lemonade.jpg"
+  },
+  "coffee": {
+    "item": "Coffee",
+    "commons_title": "File:Cup of coffee with latte art 2016.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/7/76/Cup_of_coffee_with_latte_art_2016.jpg",
+    "license": "CC BY-SA 4.0",
+    "artist": "Abdulrohmatt",
+    "file": "coffee.jpg"
+  },
+  "bottled-water": {
+    "item": "Bottled Water",
+    "commons_title": "File:Bottle of Water.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/a/ad/Bottle_of_Water.jpg",
+    "license": "CC0",
+    "artist": "Jiafei Slay Queen",
+    "file": "bottled-water.jpg"
+  }
+}

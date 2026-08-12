@@ -1,0 +1,63 @@
+<% content_for :page_title do %>
+  Square Connection
+<% end %>
+
+<div class="card w-full max-w-2xl">
+  <div class="card-header flex items-center justify-between <%= 'bg-green-50' if @credential %>">
+    <span class="font-medium">Square</span>
+    <% if @credential %>
+      <span class="inline-flex items-center text-xs font-medium text-green-700">
+        <span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1"></span>
+        Connected
+      </span>
+    <% else %>
+      <span class="inline-flex items-center text-xs font-medium text-gray-500">
+        <span class="w-1.5 h-1.5 rounded-full bg-gray-400 mr-1"></span>
+        Not connected
+      </span>
+    <% end %>
+  </div>
+
+  <div class="card-body">
+    <% if @credential %>
+      <dl class="space-y-2 text-sm">
+        <div class="flex justify-between">
+          <dt class="text-gray-500">Merchant ID</dt>
+          <dd><%= @credential.square_merchant_id %></dd>
+        </div>
+        <div class="flex justify-between">
+          <dt class="text-gray-500">Environment</dt>
+          <dd><%= @credential.square_environment %></dd>
+        </div>
+        <div class="flex justify-between">
+          <dt class="text-gray-500">Token expires</dt>
+          <dd><%= @credential.expires_at&.strftime('%b %-d, %Y %H:%M') || '—' %></dd>
+        </div>
+        <div class="flex justify-between">
+          <dt class="text-gray-500">Connected since</dt>
+          <dd><%= @credential.created_at.strftime('%b %-d, %Y') %></dd>
+        </div>
+      </dl>
+      <p class="text-xs text-gray-500 mt-4">
+        Catalog, order, and inventory sync for this store run against this connection.
+        Disconnecting stops all of it immediately — orders already pushed to Square are unaffected.
+      </p>
+    <% else %>
+      <p class="text-sm text-gray-600">
+        Connect this store to Square to sync your menu, push orders, and keep fulfillment
+        status in sync — no manually-generated access token required.
+      </p>
+    <% end %>
+  </div>
+
+  <div class="card-footer">
+    <% if @credential %>
+      <%= button_to admin_disconnect_square_oauth_path, method: :delete, class: 'btn btn-sm btn-light',
+            data: { confirm: 'Disconnect this store from Square? Syncing stops immediately.' } do %>
+        Disconnect
+      <% end %>
+    <% else %>
+      <%= link_to_with_icon 'plug', 'Connect to Square', admin_connect_square_oauth_path, class: 'btn btn-primary' %>
+    <% end %>
+  </div>
+</div>

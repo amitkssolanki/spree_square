@@ -1,0 +1,226 @@
+{
+  "Appetizers": [
+    {
+      "name": "Loaded Nachos",
+      "description": "Crispy tortilla chips, melted cheddar, jalape\u00f1os, pico de gallo, sour cream.",
+      "price_cents": 999,
+      "image_slug": "loaded-nachos"
+    },
+    {
+      "name": "Mozzarella Sticks",
+      "description": "Six breaded mozzarella sticks, marinara dipping sauce.",
+      "price_cents": 799,
+      "image_slug": "mozzarella-sticks"
+    },
+    {
+      "name": "Buffalo Wings",
+      "description": "Six jumbo wings tossed in buffalo sauce, celery, blue cheese.",
+      "price_cents": 1099,
+      "image_slug": "buffalo-wings"
+    },
+    {
+      "name": "Spinach Artichoke Dip",
+      "description": "Creamy spinach and artichoke dip, toasted pita bread.",
+      "price_cents": 849,
+      "image_slug": "spinach-artichoke-dip"
+    },
+    {
+      "name": "Onion Rings",
+      "description": "Beer-battered onion rings, chipotle mayo.",
+      "price_cents": 699,
+      "image_slug": "onion-rings"
+    }
+  ],
+  "Salads": [
+    {
+      "name": "Caesar Salad",
+      "description": "Romaine, parmesan, croutons, classic Caesar dressing.",
+      "price_cents": 899,
+      "image_slug": "caesar-salad"
+    },
+    {
+      "name": "Greek Salad",
+      "description": "Cucumber, tomato, olives, feta, red onion, oregano vinaigrette.",
+      "price_cents": 949,
+      "image_slug": "greek-salad"
+    },
+    {
+      "name": "Cobb Salad",
+      "description": "Grilled chicken, bacon, egg, avocado, blue cheese, tomato.",
+      "price_cents": 1099,
+      "image_slug": "cobb-salad"
+    },
+    {
+      "name": "House Garden Salad",
+      "description": "Mixed greens, cherry tomato, cucumber, carrot, choice of dressing.",
+      "price_cents": 699,
+      "image_slug": "house-garden-salad"
+    },
+    {
+      "name": "Southwest Chicken Salad",
+      "description": "Grilled chicken, black beans, corn, cheddar, tortilla strips, ranch.",
+      "price_cents": 1149,
+      "image_slug": "southwest-chicken-salad"
+    }
+  ],
+  "Burgers & Sandwiches": [
+    {
+      "name": "Classic Cheeseburger",
+      "description": "Beef patty, cheddar, lettuce, tomato, onion, house sauce.",
+      "price_cents": 1199,
+      "image_slug": "classic-cheeseburger"
+    },
+    {
+      "name": "Bacon BBQ Burger",
+      "description": "Beef patty, bacon, cheddar, crispy onions, BBQ sauce.",
+      "price_cents": 1349,
+      "image_slug": "bacon-bbq-burger"
+    },
+    {
+      "name": "Grilled Chicken Sandwich",
+      "description": "Grilled chicken breast, lettuce, tomato, garlic aioli.",
+      "price_cents": 1099,
+      "image_slug": "grilled-chicken-sandwich"
+    },
+    {
+      "name": "Veggie Burger",
+      "description": "House-made veggie patty, lettuce, tomato, chipotle mayo.",
+      "price_cents": 1049,
+      "image_slug": "veggie-burger"
+    },
+    {
+      "name": "Philly Cheesesteak",
+      "description": "Shaved steak, grilled peppers and onions, provolone, hoagie roll.",
+      "price_cents": 1299,
+      "image_slug": "philly-cheesesteak"
+    }
+  ],
+  "Mains": [
+    {
+      "name": "Grilled Salmon",
+      "description": "Atlantic salmon, lemon butter sauce, seasonal vegetables.",
+      "price_cents": 1799,
+      "image_slug": "grilled-salmon"
+    },
+    {
+      "name": "Ribeye Steak",
+      "description": "12oz ribeye, garlic herb butter, choice of side.",
+      "price_cents": 2299,
+      "image_slug": "ribeye-steak"
+    },
+    {
+      "name": "Chicken Parmesan",
+      "description": "Breaded chicken breast, marinara, mozzarella, spaghetti.",
+      "price_cents": 1599,
+      "image_slug": "chicken-parmesan"
+    },
+    {
+      "name": "Fish and Chips",
+      "description": "Beer-battered cod, fries, tartar sauce, malt vinegar.",
+      "price_cents": 1399,
+      "image_slug": "fish-and-chips"
+    },
+    {
+      "name": "Vegetable Stir Fry",
+      "description": "Seasonal vegetables, tofu, ginger soy sauce, steamed rice.",
+      "price_cents": 1249,
+      "image_slug": "vegetable-stir-fry"
+    }
+  ],
+  "Sides": [
+    {
+      "name": "French Fries",
+      "description": "Crispy golden fries, sea salt.",
+      "price_cents": 399,
+      "image_slug": "french-fries"
+    },
+    {
+      "name": "Sweet Potato Fries",
+      "description": "Sweet potato fries, cinnamon sugar dust.",
+      "price_cents": 449,
+      "image_slug": "sweet-potato-fries"
+    },
+    {
+      "name": "Mashed Potatoes",
+      "description": "Creamy mashed potatoes, house gravy.",
+      "price_cents": 399,
+      "image_slug": "mashed-potatoes"
+    },
+    {
+      "name": "Steamed Vegetables",
+      "description": "Seasonal steamed vegetable medley.",
+      "price_cents": 349,
+      "image_slug": "steamed-vegetables"
+    },
+    {
+      "name": "Mac and Cheese",
+      "description": "Elbow macaroni, three-cheese sauce, toasted breadcrumbs.",
+      "price_cents": 499,
+      "image_slug": "mac-and-cheese"
+    }
+  ],
+  "Desserts": [
+    {
+      "name": "Chocolate Lava Cake",
+      "description": "Warm chocolate cake, molten center, vanilla ice cream.",
+      "price_cents": 699,
+      "image_slug": "chocolate-lava-cake"
+    },
+    {
+      "name": "New York Cheesecake",
+      "description": "Classic cheesecake, berry compote.",
+      "price_cents": 649,
+      "image_slug": "new-york-cheesecake"
+    },
+    {
+      "name": "Apple Pie",
+      "description": "Warm apple pie, cinnamon, vanilla ice cream.",
+      "price_cents": 599,
+      "image_slug": "apple-pie"
+    },
+    {
+      "name": "Ice Cream Sundae",
+      "description": "Vanilla ice cream, hot fudge, whipped cream, cherry.",
+      "price_cents": 549,
+      "image_slug": "ice-cream-sundae"
+    },
+    {
+      "name": "Brownie a la Mode",
+      "description": "Warm fudge brownie, vanilla ice cream, chocolate drizzle.",
+      "price_cents": 699,
+      "image_slug": "brownie-a-la-mode"
+    }
+  ],
+  "Drinks": [
+    {
+      "name": "Fountain Soda",
+      "description": "Coke, Diet Coke, Sprite, or root beer.",
+      "price_cents": 299,
+      "image_slug": "fountain-soda"
+    },
+    {
+      "name": "Iced Tea",
+      "description": "Freshly brewed iced tea, sweetened or unsweetened.",
+      "price_cents": 299,
+      "image_slug": "iced-tea"
+    },
+    {
+      "name": "Lemonade",
+      "description": "Fresh-squeezed lemonade.",
+      "price_cents": 349,
+      "image_slug": "lemonade"
+    },
+    {
+      "name": "Coffee",
+      "description": "Freshly brewed coffee, regular or decaf.",
+      "price_cents": 249,
+      "image_slug": "coffee"
+    },
+    {
+      "name": "Bottled Water",
+      "description": "Still bottled water.",
+      "price_cents": 199,
+      "image_slug": "bottled-water"
+    }
+  ]
+}
