@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented here.
 
+## 0.1.1
+
+- OAuth now requests `PAYMENTS_READ` in addition to the existing scopes. Without it, reading
+  payment/refund state (`Client#payments`/raw `refunds` calls) fails with `INSUFFICIENT_SCOPES`
+  even though creating payments (`PAYMENTS_WRITE`) already worked. Existing connections need a
+  disconnect/reconnect in the admin to pick up the wider grant — Square doesn't expand scopes on
+  a token in place.
+
 ## 0.1.0
 
 Initial public release.

@@ -24,6 +24,7 @@ module SpreeSquare
       ORDERS_READ
       ORDERS_WRITE
       PAYMENTS_WRITE
+      PAYMENTS_READ
     ].freeze
 
     def self.authorize_url(...) = new.authorize_url(...)
