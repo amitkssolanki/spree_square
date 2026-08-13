@@ -17,6 +17,13 @@ module SpreeSquare
 
     belongs_to :store, class_name: 'Spree::Store'
 
+    # Ruby-level, not a DB-level `default: []` on the migration — MySQL
+    # rejects a literal DEFAULT on a JSON column outright (see that
+    # migration's own comment). The :square_credential factory relies on
+    # this (never sets `scopes` explicitly), so it has to actually default
+    # to an empty array, not just avoid raising.
+    attribute :scopes, default: -> { [] }
+
     encrypts :access_token, :refresh_token
 
     validates :store, presence: true, uniqueness: true

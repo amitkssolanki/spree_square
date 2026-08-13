@@ -1,0 +1,28 @@
+{
+  "ignored_warnings": [
+    {
+      "warning_type": "Cross-Site Request Forgery",
+      "warning_code": 86,
+      "fingerprint": "1bed78a0df37b0520a169a67b62ba7df8b4af42e6f12844ac923bfde7958fc14",
+      "check_name": "ForgerySetting",
+      "message": "`protect_from_forgery` should be configured with `with: :exception`",
+      "file": "app/controllers/spree_square/webhooks_controller.rb",
+      "line": 15,
+      "link": "https://brakemanscanner.org/docs/warning_types/cross-site_request_forgery/",
+      "code": "protect_from_forgery(:with => :null_session)",
+      "render_path": null,
+      "location": {
+        "type": "controller",
+        "controller": "SpreeSquare::WebhooksController"
+      },
+      "user_input": null,
+      "confidence": "Medium",
+      "cwe_id": [
+        352
+      ],
+      "note": "Intentional, not a false positive to fix: this is a webhook endpoint authenticated by Square's HMAC signature (SpreeSquare::WebhookVerifier), not by a Rails session, so there's no session-based state for CSRF to protect in the first place. `:exception` (Brakeman's preferred default) would make every legitimate webhook POST raise ActionController::InvalidAuthenticityToken, since Square never sends a Rails CSRF token — that would break the endpoint entirely, not harden it. `:null_session` is the correct, standard Rails pattern for an unauthenticated-by-session API/webhook endpoint."
+    }
+  ],
+  "updated": "2026-08-13 23:32:22 +0530",
+  "brakeman_version": "8.0.5"
+}

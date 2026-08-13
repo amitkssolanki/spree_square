@@ -18,7 +18,14 @@ class CreateSpreeSquareCredentials < ActiveRecord::Migration[8.1]
       t.datetime :refresh_token_expires_at
       # `t.json`, not `t.jsonb`/`array: true` — the extension's own dummy
       # app (spec/dummy) runs on SQLite, which supports neither.
-      t.json :scopes, default: [], null: false
+      #
+      # No `default: []` here — MySQL rejects a literal DEFAULT on JSON
+      # columns entirely, which canceled every migration after this one in
+      # CI's MySQL job. Default now lives on the model instead (see
+      # Credential's own `attribute :scopes, default: -> { [] }`) — the
+      # :square_credential factory relies on this default (never sets
+      # `scopes` explicitly), so this had to move, not just disappear.
+      t.json :scopes, null: false
 
       t.timestamps
     end

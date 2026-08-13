@@ -12,7 +12,17 @@ class CreateSpreeSquareWebhookEvents < ActiveRecord::Migration[8.1]
       # JSON querying — application code only ever reads/writes it as a
       # plain Ruby hash, so the Postgres jsonb-vs-json performance distinction
       # doesn't apply.
-      t.json :payload, null: false, default: {}
+      #
+      # No `default: {}` here — MySQL rejects a literal DEFAULT on
+      # BLOB/TEXT/GEOMETRY/JSON columns outright ("BLOB, TEXT, GEOMETRY or
+      # JSON column 'payload' can't have a default value"), which silently
+      # canceled every migration after this one in CI's MySQL job — every
+      # spree_square_* table after this one in migration order was just
+      # missing. Found via a real MySQL CI failure, not from docs. The
+      # default now lives on the model instead (see WebhookEvent's own
+      # `attribute :payload, default: -> { {} }`), which works identically
+      # across every adapter.
+      t.json :payload, null: false
       t.datetime :processed_at
       t.string :status, null: false, default: 'pending' # pending, processed, failed
       t.text :error_message
