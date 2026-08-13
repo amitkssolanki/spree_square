@@ -5,6 +5,17 @@ module Spree
   # SpreeSquare-prefixed one) means nothing ever triggers loading this file
   # at all, silently, since nothing references the name Zeitwerk expects.
   module LineItemDecorator
+    def self.prepended(base)
+      # No `dependent: :destroy` here originally meant removing a line item
+      # that had modifier selections hit a foreign-key violation instead of
+      # actually removing it (spree_square_line_item_modifiers.line_item_id
+      # has no ON DELETE behavior beyond Postgres's RESTRICT default) — only
+      # surfaced once a real modifier-bearing item was added to a cart and
+      # then removed, which nothing exercised before.
+      base.has_many :square_line_item_modifiers, class_name: 'SpreeSquare::LineItemModifier',
+                                                   foreign_key: 'line_item_id', dependent: :destroy
+    end
+
     # Transient carrier for selected modifier ids from add-to-cart through to
     # SpreeSquare::Cart::AddItem, which reads it right after `super` to build
     # the persistent LineItemModifier snapshot rows. Never persisted itself —

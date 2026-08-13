@@ -278,5 +278,21 @@
     "license": "CC0",
     "artist": "Jiafei Slay Queen",
     "file": "bottled-water.jpg"
+  },
+  "build-your-own-bowl": {
+    "item": "Build-Your-Own Bowl",
+    "commons_title": "File:Steak burrito bowl at La Casa Restaurant in Sonoma, California - Sarah Stierch 03.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/f/f6/Steak_burrito_bowl_at_La_Casa_Restaurant_in_Sonoma%2C_California_-_Sarah_Stierch_03.jpg",
+    "license": "CC BY 4.0",
+    "artist": "Missvain",
+    "file": "build-your-own-bowl.jpg"
+  },
+  "lunch-combo": {
+    "item": "Lunch Combo",
+    "commons_title": "File:Cheesburger 400 Lunch Combo, Flame 400 Burger Cafe Raine Square, 2026 (01).jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/9/9b/Cheesburger_400_Lunch_Combo%2C_Flame_400_Burger_Cafe_Raine_Square%2C_2026_%2801%29.jpg",
+    "license": "CC BY-SA 4.0",
+    "artist": "Bahnfrend",
+    "file": "lunch-combo.jpg"
   }
 }
