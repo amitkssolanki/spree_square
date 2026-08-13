@@ -59,6 +59,42 @@ namespace :spree_square do
     menu.each do |category_name, items|
       items.each do |item|
         item_temp_id = "#item-#{item['image_slug']}"
+
+        # Modifier lists (Square has no true nested-modifier concept — a
+        # "build your own" item is just several independent modifier lists
+        # stacked on one item, each its own CatalogObject nested inline the
+        # same way ITEM_VARIATION is nested under item_data.variations
+        # above). modifier_list_info is what actually attaches a list to
+        # this item; the MODIFIER_LIST objects themselves go in the same
+        # top-level `objects` array as everything else in the batch.
+        modifier_list_info = Array(item['modifier_lists']).map.with_index do |mod_list, list_index|
+          list_temp_id = "#{item_temp_id}-modlist-#{list_index}"
+          objects << {
+            type: 'MODIFIER_LIST',
+            id: list_temp_id,
+            modifier_list_data: {
+              name: mod_list['name'],
+              selection_type: mod_list['selection_type'],
+              modifiers: mod_list['options'].map.with_index do |option, option_index|
+                {
+                  type: 'MODIFIER',
+                  id: "#{list_temp_id}-opt-#{option_index}",
+                  modifier_data: {
+                    name: option['name'],
+                    price_money: { amount: option['price_cents'], currency: 'USD' }
+                  }
+                }
+              end
+            }
+          }
+          {
+            modifier_list_id: list_temp_id,
+            min_selected_modifiers: mod_list['min_selected'],
+            max_selected_modifiers: mod_list['max_selected'],
+            enabled: true
+          }
+        end
+
         objects << {
           type: 'ITEM',
           id: item_temp_id,
@@ -82,8 +118,9 @@ namespace :spree_square do
                   price_money: { amount: item['price_cents'], currency: 'USD' }
                 }
               }
-            ]
-          }
+            ],
+            modifier_list_info: modifier_list_info
+          }.compact_blank
         }
       end
     end

@@ -125,6 +125,92 @@
       "description": "Seasonal vegetables, tofu, ginger soy sauce, steamed rice.",
       "price_cents": 1249,
       "image_slug": "vegetable-stir-fry"
+    },
+    {
+      "name": "Build-Your-Own Bowl",
+      "description": "Pick your base, protein, and toppings — built your way.",
+      "price_cents": 1199,
+      "image_slug": "build-your-own-bowl",
+      "modifier_lists": [
+        {
+          "name": "Choose Your Base",
+          "selection_type": "SINGLE",
+          "min_selected": 1,
+          "max_selected": 1,
+          "options": [
+            { "name": "Cilantro Lime Rice", "price_cents": 0 },
+            { "name": "Quinoa", "price_cents": 100 },
+            { "name": "Mixed Greens", "price_cents": 0 }
+          ]
+        },
+        {
+          "name": "Choose Your Protein",
+          "selection_type": "SINGLE",
+          "min_selected": 1,
+          "max_selected": 1,
+          "options": [
+            { "name": "Grilled Chicken", "price_cents": 300 },
+            { "name": "Steak", "price_cents": 400 },
+            { "name": "Tofu", "price_cents": 200 },
+            { "name": "Shrimp", "price_cents": 400 }
+          ]
+        },
+        {
+          "name": "Extra Toppings",
+          "selection_type": "MULTIPLE",
+          "min_selected": 0,
+          "max_selected": 5,
+          "options": [
+            { "name": "Corn Salsa", "price_cents": 75 },
+            { "name": "Black Beans", "price_cents": 75 },
+            { "name": "Shredded Cheese", "price_cents": 100 },
+            { "name": "Avocado", "price_cents": 150 },
+            { "name": "Pico de Gallo", "price_cents": 75 },
+            { "name": "Sour Cream", "price_cents": 75 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Lunch Combo",
+      "description": "Choose one entree, one side, and one drink — combo savings included.",
+      "price_cents": 1399,
+      "image_slug": "lunch-combo",
+      "modifier_lists": [
+        {
+          "name": "Choose Your Entree",
+          "selection_type": "SINGLE",
+          "min_selected": 1,
+          "max_selected": 1,
+          "options": [
+            { "name": "Grilled Chicken Sandwich", "price_cents": 0 },
+            { "name": "Classic Cheeseburger", "price_cents": 0 },
+            { "name": "Grilled Salmon", "price_cents": 300 }
+          ]
+        },
+        {
+          "name": "Choose Your Side",
+          "selection_type": "SINGLE",
+          "min_selected": 1,
+          "max_selected": 1,
+          "options": [
+            { "name": "French Fries", "price_cents": 0 },
+            { "name": "Side Salad", "price_cents": 0 },
+            { "name": "Sweet Potato Fries", "price_cents": 150 }
+          ]
+        },
+        {
+          "name": "Choose Your Drink",
+          "selection_type": "SINGLE",
+          "min_selected": 1,
+          "max_selected": 1,
+          "options": [
+            { "name": "Fountain Soda", "price_cents": 0 },
+            { "name": "Iced Tea", "price_cents": 0 },
+            { "name": "Lemonade", "price_cents": 0 }
+          ]
+        }
+      ]
     }
   ],
   "Sides": [
