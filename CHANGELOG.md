@@ -2,6 +2,27 @@
 
 All notable changes to this project are documented here.
 
+## 0.1.2
+
+- Two new demo menu items (a build-your-own bowl with stacked modifier lists, a combo meal with
+  entree/drink/side) with real Square modifier lists — the first end-to-end proof the modifier
+  system renders against real Square catalog data, not just specs.
+- Fixed a real bug: removing a modifier-bearing line item from the cart raised a foreign-key
+  violation (`spree_square_line_item_modifiers` had no `dependent: :destroy`).
+- Fixed a real bug: the Square Orders / Square Webhooks admin pages 500'd
+  (`undefined method 'new_admin_square_order_mapping_url'`) the moment either table was empty —
+  `Spree.admin.tables.register` defaults to expecting a `:new` route that doesn't exist on these
+  read-only, index-only resources. Added `new_resource: false` to both.
+- Fixed a real bug: installing on MySQL couldn't even run migrations — MySQL rejects a literal
+  `DEFAULT` value on `JSON`/`TEXT`/`BLOB` columns outright, which canceled every migration after
+  `CreateSpreeSquareWebhookEvents`/`CreateSpreeSquareCredentials` in migration order. Moved both
+  defaults (`WebhookEvent#payload`, `Credential#scopes`) to the model layer instead, verified
+  against a real MySQL 8.0 database.
+- Fixed a Brakeman warning: `WebhooksController` never actually had `protect_from_forgery`
+  configured (it doesn't inherit the host app's `ApplicationController`). Added it explicitly
+  with `:null_session` — correct for a signature-verified webhook endpoint with no session to
+  protect; `:exception` would break every real webhook delivery.
+
 ## 0.1.1
 
 - OAuth now requests `PAYMENTS_READ` in addition to the existing scopes. Without it, reading
