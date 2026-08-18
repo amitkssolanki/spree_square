@@ -95,6 +95,102 @@
       "image_slug": "philly-cheesesteak"
     }
   ],
+  "Pizzas": [
+    {
+      "name": "Cheese Pizza",
+      "description": "Classic New York-style pie, mozzarella, house tomato sauce.",
+      "price_cents": 1399,
+      "image_slug": "cheese-pizza"
+    },
+    {
+      "name": "Pepperoni Pizza",
+      "description": "Mozzarella, house tomato sauce, loaded with pepperoni.",
+      "price_cents": 1599,
+      "image_slug": "pepperoni-pizza"
+    },
+    {
+      "name": "Margherita Pizza",
+      "description": "San Marzano tomatoes, fresh mozzarella, basil, olive oil.",
+      "price_cents": 1499,
+      "image_slug": "margherita-pizza"
+    },
+    {
+      "name": "Veggie Pizza",
+      "description": "Bell peppers, tomato, broccoli, cauliflower, olives, mozzarella.",
+      "price_cents": 1499,
+      "image_slug": "veggie-pizza"
+    },
+    {
+      "name": "BBQ Chicken Pizza",
+      "description": "Grilled chicken, red onion, cilantro, smoky BBQ drizzle, mozzarella.",
+      "price_cents": 1699,
+      "image_slug": "bbq-chicken-pizza"
+    },
+    {
+      "name": "Build-Your-Own Half & Half Pizza",
+      "description": "Two halves, two toppings \u2014 pick a topping for each side of the pie.",
+      "price_cents": 1699,
+      "image_slug": "build-your-own-half-half-pizza",
+      "modifier_lists": [
+        {
+          "name": "Left Half",
+          "selection_type": "SINGLE",
+          "min_selected": 1,
+          "max_selected": 1,
+          "options": [
+            {
+              "name": "Cheese",
+              "price_cents": 0
+            },
+            {
+              "name": "Pepperoni",
+              "price_cents": 0
+            },
+            {
+              "name": "Margherita",
+              "price_cents": 0
+            },
+            {
+              "name": "Veggie",
+              "price_cents": 100
+            },
+            {
+              "name": "BBQ Chicken",
+              "price_cents": 200
+            }
+          ]
+        },
+        {
+          "name": "Right Half",
+          "selection_type": "SINGLE",
+          "min_selected": 1,
+          "max_selected": 1,
+          "options": [
+            {
+              "name": "Cheese",
+              "price_cents": 0
+            },
+            {
+              "name": "Pepperoni",
+              "price_cents": 0
+            },
+            {
+              "name": "Margherita",
+              "price_cents": 0
+            },
+            {
+              "name": "Veggie",
+              "price_cents": 100
+            },
+            {
+              "name": "BBQ Chicken",
+              "price_cents": 200
+            }
+          ]
+        }
+      ]
+    }
+  ],
   "Mains": [
     {
       "name": "Grilled Salmon",
@@ -128,7 +224,7 @@
     },
     {
       "name": "Build-Your-Own Bowl",
-      "description": "Pick your base, protein, and toppings — built your way.",
+      "description": "Pick your base, protein, and toppings \u2014 built your way.",
       "price_cents": 1199,
       "image_slug": "build-your-own-bowl",
       "modifier_lists": [
@@ -138,9 +234,18 @@
           "min_selected": 1,
           "max_selected": 1,
           "options": [
-            { "name": "Cilantro Lime Rice", "price_cents": 0 },
-            { "name": "Quinoa", "price_cents": 100 },
-            { "name": "Mixed Greens", "price_cents": 0 }
+            {
+              "name": "Cilantro Lime Rice",
+              "price_cents": 0
+            },
+            {
+              "name": "Quinoa",
+              "price_cents": 100
+            },
+            {
+              "name": "Mixed Greens",
+              "price_cents": 0
+            }
           ]
         },
         {
@@ -149,10 +254,22 @@
           "min_selected": 1,
           "max_selected": 1,
           "options": [
-            { "name": "Grilled Chicken", "price_cents": 300 },
-            { "name": "Steak", "price_cents": 400 },
-            { "name": "Tofu", "price_cents": 200 },
-            { "name": "Shrimp", "price_cents": 400 }
+            {
+              "name": "Grilled Chicken",
+              "price_cents": 300
+            },
+            {
+              "name": "Steak",
+              "price_cents": 400
+            },
+            {
+              "name": "Tofu",
+              "price_cents": 200
+            },
+            {
+              "name": "Shrimp",
+              "price_cents": 400
+            }
           ]
         },
         {
@@ -161,19 +278,37 @@
           "min_selected": 0,
           "max_selected": 5,
           "options": [
-            { "name": "Corn Salsa", "price_cents": 75 },
-            { "name": "Black Beans", "price_cents": 75 },
-            { "name": "Shredded Cheese", "price_cents": 100 },
-            { "name": "Avocado", "price_cents": 150 },
-            { "name": "Pico de Gallo", "price_cents": 75 },
-            { "name": "Sour Cream", "price_cents": 75 }
+            {
+              "name": "Corn Salsa",
+              "price_cents": 75
+            },
+            {
+              "name": "Black Beans",
+              "price_cents": 75
+            },
+            {
+              "name": "Shredded Cheese",
+              "price_cents": 100
+            },
+            {
+              "name": "Avocado",
+              "price_cents": 150
+            },
+            {
+              "name": "Pico de Gallo",
+              "price_cents": 75
+            },
+            {
+              "name": "Sour Cream",
+              "price_cents": 75
+            }
           ]
         }
       ]
     },
     {
       "name": "Lunch Combo",
-      "description": "Choose one entree, one side, and one drink — combo savings included.",
+      "description": "Choose one entree, one side, and one drink \u2014 combo savings included.",
       "price_cents": 1399,
       "image_slug": "lunch-combo",
       "modifier_lists": [
@@ -183,9 +318,18 @@
           "min_selected": 1,
           "max_selected": 1,
           "options": [
-            { "name": "Grilled Chicken Sandwich", "price_cents": 0 },
-            { "name": "Classic Cheeseburger", "price_cents": 0 },
-            { "name": "Grilled Salmon", "price_cents": 300 }
+            {
+              "name": "Grilled Chicken Sandwich",
+              "price_cents": 0
+            },
+            {
+              "name": "Classic Cheeseburger",
+              "price_cents": 0
+            },
+            {
+              "name": "Grilled Salmon",
+              "price_cents": 300
+            }
           ]
         },
         {
@@ -194,9 +338,18 @@
           "min_selected": 1,
           "max_selected": 1,
           "options": [
-            { "name": "French Fries", "price_cents": 0 },
-            { "name": "Side Salad", "price_cents": 0 },
-            { "name": "Sweet Potato Fries", "price_cents": 150 }
+            {
+              "name": "French Fries",
+              "price_cents": 0
+            },
+            {
+              "name": "Side Salad",
+              "price_cents": 0
+            },
+            {
+              "name": "Sweet Potato Fries",
+              "price_cents": 150
+            }
           ]
         },
         {
@@ -205,9 +358,130 @@
           "min_selected": 1,
           "max_selected": 1,
           "options": [
-            { "name": "Fountain Soda", "price_cents": 0 },
-            { "name": "Iced Tea", "price_cents": 0 },
-            { "name": "Lemonade", "price_cents": 0 }
+            {
+              "name": "Fountain Soda",
+              "price_cents": 0
+            },
+            {
+              "name": "Iced Tea",
+              "price_cents": 0
+            },
+            {
+              "name": "Lemonade",
+              "price_cents": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Burger Combo",
+      "description": "Choose your burger and drink \u2014 served with french fries.",
+      "price_cents": 1399,
+      "image_slug": "burger-combo",
+      "modifier_lists": [
+        {
+          "name": "Choose Your Burger",
+          "selection_type": "SINGLE",
+          "min_selected": 1,
+          "max_selected": 1,
+          "options": [
+            {
+              "name": "Classic Cheeseburger",
+              "price_cents": 0
+            },
+            {
+              "name": "Bacon BBQ Burger",
+              "price_cents": 150
+            },
+            {
+              "name": "Grilled Chicken Sandwich",
+              "price_cents": 0
+            },
+            {
+              "name": "Veggie Burger",
+              "price_cents": 0
+            }
+          ]
+        },
+        {
+          "name": "Choose Your Drink",
+          "selection_type": "SINGLE",
+          "min_selected": 1,
+          "max_selected": 1,
+          "options": [
+            {
+              "name": "Fountain Soda",
+              "price_cents": 0
+            },
+            {
+              "name": "Iced Tea",
+              "price_cents": 0
+            },
+            {
+              "name": "Lemonade",
+              "price_cents": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Family Feast Combo",
+      "description": "A whole pizza plus a shareable side \u2014 feeds the table (serves ~4).",
+      "price_cents": 3499,
+      "image_slug": "family-feast-combo",
+      "modifier_lists": [
+        {
+          "name": "Choose Your Pizza",
+          "selection_type": "SINGLE",
+          "min_selected": 1,
+          "max_selected": 1,
+          "options": [
+            {
+              "name": "Cheese",
+              "price_cents": 0
+            },
+            {
+              "name": "Pepperoni",
+              "price_cents": 0
+            },
+            {
+              "name": "Margherita",
+              "price_cents": 0
+            },
+            {
+              "name": "Veggie",
+              "price_cents": 0
+            },
+            {
+              "name": "BBQ Chicken",
+              "price_cents": 200
+            }
+          ]
+        },
+        {
+          "name": "Choose Your Side",
+          "selection_type": "SINGLE",
+          "min_selected": 1,
+          "max_selected": 1,
+          "options": [
+            {
+              "name": "French Fries",
+              "price_cents": 0
+            },
+            {
+              "name": "Side Salad",
+              "price_cents": 0
+            },
+            {
+              "name": "Buffalo Wings",
+              "price_cents": 300
+            },
+            {
+              "name": "Mozzarella Sticks",
+              "price_cents": 200
+            }
           ]
         }
       ]

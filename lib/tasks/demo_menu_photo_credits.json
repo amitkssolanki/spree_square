@@ -294,5 +294,69 @@
     "license": "CC BY-SA 4.0",
     "artist": "Bahnfrend",
     "file": "lunch-combo.jpg"
+  },
+  "cheese-pizza": {
+    "item": "Cheese Pizza",
+    "commons_title": "File:NY Pie - December 2024 - Sarah Stierch 13.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/e/e7/NY_Pie_-_December_2024_-_Sarah_Stierch_13.jpg",
+    "license": "CC0",
+    "artist": "Missvain",
+    "file": "cheese-pizza.jpg"
+  },
+  "pepperoni-pizza": {
+    "item": "Pepperoni Pizza",
+    "commons_title": "File:Pepperoni Pizza from Fellini\u2019s Pizza.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/3/30/Pepperoni_Pizza_from_Fellini%E2%80%99s_Pizza.jpg",
+    "license": "CC BY 4.0",
+    "artist": "BullDawg2021",
+    "file": "pepperoni-pizza.jpg"
+  },
+  "margherita-pizza": {
+    "item": "Margherita Pizza",
+    "commons_title": "File:Margherita pizza on plate.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/d/de/Margherita_pizza_on_plate.jpg",
+    "license": "CC BY 4.0",
+    "artist": "Shisma",
+    "file": "margherita-pizza.jpg"
+  },
+  "veggie-pizza": {
+    "item": "Veggie Pizza",
+    "commons_title": "File:Vegetarian Pizza.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/7/7e/Vegetarian_Pizza.jpg",
+    "license": "CC BY-SA 4.0",
+    "artist": "Petar Milo\u0161evi\u0107",
+    "file": "veggie-pizza.jpg"
+  },
+  "bbq-chicken-pizza": {
+    "item": "BBQ Chicken Pizza",
+    "commons_title": "File:BBQ CHICKEN PIZZA.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/6/60/BBQ_CHICKEN_PIZZA.jpg",
+    "license": "CC BY-SA 4.0",
+    "artist": "Zeeshan93",
+    "file": "bbq-chicken-pizza.jpg"
+  },
+  "build-your-own-half-half-pizza": {
+    "item": "Build-Your-Own Half & Half Pizza",
+    "commons_title": "File:Half and half pizza.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/a/a0/Half_and_half_pizza.jpg",
+    "license": "CC BY 2.0",
+    "artist": "jeffreyw",
+    "file": "build-your-own-half-half-pizza.jpg"
+  },
+  "burger-combo": {
+    "item": "Burger Combo",
+    "commons_title": "File:Bacon Cheeseburger with French Fries on plate.JPG",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/6/62/Bacon_Cheeseburger_with_French_Fries_on_plate.JPG",
+    "license": "CC BY-SA 4.0",
+    "artist": "Ceeseven",
+    "file": "burger-combo.jpg"
+  },
+  "family-feast-combo": {
+    "item": "Family Feast Combo",
+    "commons_title": "File:Pizza and Spaghetti Combo.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/9/9c/Pizza_and_Spaghetti_Combo.jpg",
+    "license": "CC0",
+    "artist": "Cali2025",
+    "file": "family-feast-combo.jpg"
   }
 }
