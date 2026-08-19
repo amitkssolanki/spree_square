@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here.
 
+## 0.1.3
+
+- New demo menu content: a "Pizzas" category with 5 standalone pizzas plus a
+  Build-Your-Own Half & Half Pizza (two stacked SINGLE-select modifier lists,
+  "Left Half"/"Right Half", sharing the same 5 toppings) — the concrete
+  real-world case for two independent modifier lists stacked on one item.
+  Also 2 new combo items (Burger Combo, Family Feast Combo), joining the
+  existing Lunch Combo. Demo menu is now 45 items across 8 categories (up
+  from 37/7).
+
 ## 0.1.2
 
 - Two new demo menu items (a build-your-own bowl with stacked modifier lists, a combo meal with
