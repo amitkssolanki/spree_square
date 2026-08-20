@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented here.
 
-## 0.1.4
+## 0.2.0
 
 - **Sales tax, sourced from Square's own catalog tax config.** Square's Catalog API has no concept
   of jurisdiction, so this is two pieces working together: a new rake task
