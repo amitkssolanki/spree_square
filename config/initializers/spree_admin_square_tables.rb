@@ -92,4 +92,52 @@ Rails.application.config.after_initialize do
     filterable: false,
     default: true,
     position: 50
+
+  # new_resource: false — read-only, same reason as every table above (no
+  # :new/:create route; only: [:index] in config/routes.rb).
+  Spree.admin.tables.register(:square_tax_rates, model_class: Spree::TaxRate,
+                                                   search_param: :name_cont, new_resource: false)
+
+  Spree.admin.tables.square_tax_rates.add :name,
+    label: :name,
+    type: :string,
+    sortable: true,
+    filterable: true,
+    default: true,
+    position: 10
+
+  Spree.admin.tables.square_tax_rates.add :amount_percentage,
+    label: :rate,
+    type: :string,
+    sortable: false,
+    filterable: false,
+    default: true,
+    position: 20,
+    method: ->(rate) { "#{rate.amount_percentage}%" }
+
+  Spree.admin.tables.square_tax_rates.add :zone,
+    label: :zone,
+    type: :string,
+    sortable: false,
+    filterable: false,
+    default: true,
+    position: 30,
+    method: ->(rate) { rate.zone&.name }
+
+  Spree.admin.tables.square_tax_rates.add :tax_category,
+    label: :tax_category,
+    type: :string,
+    sortable: false,
+    filterable: false,
+    default: true,
+    position: 40,
+    method: ->(rate) { rate.tax_category&.name }
+
+  Spree.admin.tables.square_tax_rates.add :updated_at,
+    label: :last_synced,
+    type: :datetime,
+    sortable: true,
+    filterable: false,
+    default: true,
+    position: 50
 end

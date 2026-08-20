@@ -70,6 +70,32 @@ The original single-tenant path: generate a token yourself from the Developer Da
 store that hasn't connected via OAuth — convenient for local development, but not something
 Square allows for real multi-merchant production use.
 
+## Sales tax
+
+Tax rates are configured in Square (the same place you manage the menu), not in Spree's admin —
+this extension keeps `Spree::TaxRate`/`Spree::TaxCategory` in sync with whatever `TAX` catalog
+objects and item `tax_ids` you set up in Square. **Square's Catalog API has no concept of
+jurisdiction**, so one one-time Spree-side step is still required:
+
+```bash
+bin/rails spree_square:ensure_tax_zone
+```
+
+This creates a `Spree::Zone` matching your store's own `Spree::StockLocation` state (re-derived
+live — re-run it if that address ever changes). From there, create a `TAX` object in Square and
+attach it to your taxable items (via the Square dashboard, or the Catalog API's
+`update_item_taxes`) — the next catalog sync (webhook or `spree_square:import_catalog`) picks it
+up automatically. `spree_square:setup_demo_tax` does both of the Square-side steps for you against
+a fresh Sandbox catalog, for a working demo without leaving the terminal.
+
+Delivery/shipping fees are entirely outside Square's model — assign a `tax_category` to your
+`Spree::ShippingMethod` records directly (`setup_demo_tax` does this too) if you want them taxed
+the same way.
+
+An item carrying more than one Square tax at once (rare — most stores have exactly one) gets its
+own composite `Spree::TaxCategory` combining all of them; Spree's own tax-calculation engine sums
+every rate that shares an item's category, so no special handling is needed at checkout time.
+
 ## Developing
 
 1. Create a dummy app

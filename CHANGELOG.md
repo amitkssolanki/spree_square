@@ -2,6 +2,38 @@
 
 All notable changes to this project are documented here.
 
+## 0.1.4
+
+- **Sales tax, sourced from Square's own catalog tax config.** Square's Catalog API has no concept
+  of jurisdiction, so this is two pieces working together: a new rake task
+  (`spree_square:ensure_tax_zone`) sets up a Spree::Zone matching the store's own StockLocation
+  state (re-derived live, not hardcoded), and the catalog importer now pulls Square's `TAX`
+  catalog objects (`CatalogImporter`/`CatalogObjectMapper#map_tax`) plus each item's `tax_ids`
+  (`#resolve_tax_category`), mirroring them into `Spree::TaxRate`/`Spree::TaxCategory` — Spree's
+  own built-in tax-calculation engine does the actual per-order math, unchanged. An item carrying
+  more than one Square tax at once gets its own composite `Spree::TaxCategory` with one
+  `Spree::TaxRate` per constituent tax (`SpreeSquare::TaxMapping`/`TaxCategoryMapping`), rather
+  than forcing a single flat rate — correct for the general case, though this project's own
+  catalog only ever needs one. Disabling a tax in Square soft-deletes every `Spree::TaxRate` it
+  backs; re-enabling restores them. Reuses the existing `catalog.version.updated` webhook — no new
+  subscription needed.
+- New rake task `spree_square:setup_demo_tax` — creates a real "Sales Tax" object in Square
+  Sandbox, batch-attaches it to every item via `update_item_taxes`, and (Spree-side, since Square
+  has no concept of a delivery fee at all) applies the same tax category to every shipping method.
+- New read-only admin page, "Square Tax Rates" (`/admin/square_tax_rates`), mirroring the existing
+  Square Orders/Webhooks pages.
+- Fixed a real bug found while building this: `Spree::TaxRate`'s `has_one :calculator, dependent:
+  destroy` performs a REAL (hard) destroy even when the owning TaxRate is only soft-deleted —
+  acts_as_paranoid only intercepts the TaxRate's own row, not its dependent-destroy callback
+  chain. Re-enabling a previously-disabled tax rebuilds the lost calculator explicitly; without
+  this, the very next order recalculation against that rate raised
+  (`Spree::TaxRate#calculator` was blank).
+- Documented, not fixed here (pre-existing, discovered during manual verification): a store's
+  connected OAuth credential (`SpreeSquare::Credential`) may not carry `ITEMS_WRITE` if it was
+  authorized before this or `seed_demo_menu`'s scope needs existed — both item-write rake tasks
+  need it. Reconnecting via the admin's OAuth flow picks up the current scope list; until then,
+  `setup_demo_tax` explicitly bypasses the connected credential in favor of `SQUARE_ACCESS_TOKEN`.
+
 ## 0.1.3
 
 - New demo menu content: a "Pizzas" category with 5 standalone pizzas plus a

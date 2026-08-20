@@ -75,6 +75,46 @@ module SpreeSquare
       modifier
     end
 
+    # Upserts a Square CatalogTax into SpreeSquare::TaxMapping — a pure
+    # mirror (percentage/inclusion/enabled), category-agnostic. Which
+    # Spree::TaxCategory (and therefore Spree::TaxRate) this tax actually
+    # backs is resolved per-item in map_item, since that depends on which
+    # *combination* of taxes each item carries — see resolve_tax_category.
+    def map_tax(square_object)
+      data = square_object.tax_data
+      mapping = SpreeSquare::TaxMapping.find_or_initialize_by(square_tax_id: square_object.id)
+      return mapping if mapping.persisted? && mapping.stale?(square_object.version)
+
+      was_enabled = mapping.persisted? ? mapping.enabled : nil
+      mapping.name = data.name.presence || 'Square Tax'
+      mapping.percentage = data.percentage.presence&.to_d || 0
+      mapping.included_in_price = (data.inclusion_type == 'INCLUSIVE')
+      mapping.enabled = data.enabled != false
+      mapping.square_version = square_object.version
+      mapping.last_synced_at = Time.current
+      mapping.save!
+
+      # Enable/disable first — a re-enable rebuilds the rate's calculator
+      # (see sync_enabled_state!'s own comment for why that's needed), which
+      # the amount/inclusion sync below depends on being present.
+      sync_enabled_state!(mapping, was_enabled)
+
+      # Already-materialized (and currently live) rates mirror any
+      # percentage/inclusion/name change immediately — Square is the source
+      # of truth here, these rows are never hand-edited in Spree. A rate
+      # that's still disabled is skipped: no live TaxRate exists for it to
+      # update, and the next enable will rebuild it fresh from this mapping
+      # anyway.
+      mapping.tax_category_mappings.includes(:tax_rate).each do |tcm|
+        rate = tcm.tax_rate
+        next unless rate && !rate.paranoia_destroyed?
+
+        rate.update!(amount: mapping.percentage / 100.0, included_in_price: mapping.included_in_price, name: mapping.name)
+      end
+
+      mapping
+    end
+
     def map_item(square_object)
       data = square_object.item_data
       mapping = SpreeSquare::CatalogMapping.find_or_initialize_by(
@@ -91,6 +131,7 @@ module SpreeSquare
       )
       product.name = data.name.presence || 'Untitled item'
       product.description = data.description
+      product.tax_category = resolve_tax_category(data)
       product.save!
 
       publish!(product)
@@ -221,6 +262,123 @@ module SpreeSquare
     def generate_slug(name, square_id)
       base = name.presence || 'item'
       "#{base.parameterize}-#{square_id.downcase}"
+    end
+
+    # Enable/disable is the one thing that can't just be "update the row" —
+    # a disabled Square tax must stop applying everywhere it appears, and a
+    # re-enabled one must resume applying with no re-import of the items
+    # that reference it. Spree::TaxRate is acts_as_paranoid, so soft-delete/
+    # restore is exactly "stop/resume applying" — Spree's own
+    # TaxRate.potential_rates_for_zone already excludes deleted rows via its
+    # default scope, no other code needs to know about this.
+    def sync_enabled_state!(mapping, was_enabled)
+      return if was_enabled == mapping.enabled
+
+      mapping.tax_category_mappings.each do |tcm|
+        rate = tcm.tax_rate
+        next unless rate
+
+        if mapping.enabled
+          next unless rate.paranoia_destroyed?
+
+          rate.restore(recursive: true)
+          # Spree::TaxRate's `has_one :calculator, dependent: :destroy` is a
+          # REAL (hard) destroy even when the owning TaxRate is only
+          # soft-deleted — acts_as_paranoid intercepts the TaxRate's own row,
+          # not its dependent-destroy callbacks. So a restored rate has no
+          # calculator left to restore; rebuild it, or `TaxRate.adjust`'s
+          # `delegate :compute, to: :calculator` raises on the next order
+          # recalculation.
+          rate.calculator_type = 'Spree::Calculator::DefaultTax' if rate.calculator.nil?
+          rate.save!
+        elsif !rate.paranoia_destroyed?
+          rate.destroy
+        end
+      end
+    end
+
+    # Resolves an item's exact set of Square tax_ids to the Spree::TaxCategory
+    # that represents that combination — creating it (and the underlying
+    # Spree::TaxRate(s), one per constituent Square tax) the first time this
+    # exact combination is seen. See TaxCategoryMapping for why a composite
+    # category can need more than one row here.
+    def resolve_tax_category(item_data)
+      square_tax_ids = Array(item_data.tax_ids)
+      return non_taxable_category if square_tax_ids.empty?
+
+      tax_mappings = SpreeSquare::TaxMapping.where(square_tax_id: square_tax_ids).to_a
+      # Item references a tax id this store hasn't synced yet (import order,
+      # or the tax was deleted in Square) — fall back to non-taxable rather
+      # than guessing; a later re-import (taxes always run before items)
+      # will resolve it correctly once the tax itself is known.
+      return non_taxable_category if tax_mappings.empty?
+
+      existing_category_id = matching_composite_category_id(tax_mappings)
+      return Spree::TaxCategory.find(existing_category_id) if existing_category_id
+
+      create_composite_tax_category!(tax_mappings)
+    end
+
+    def matching_composite_category_id(tax_mappings)
+      target_ids = tax_mappings.map(&:id)
+      candidates = SpreeSquare::TaxCategoryMapping.where(tax_mapping_id: target_ids)
+                                                    .group(:tax_category_id)
+                                                    .having('COUNT(*) = ?', target_ids.size)
+                                                    .pluck(:tax_category_id)
+
+      # The HAVING above only proves the candidate contains at least
+      # `target_ids.size` of OUR mappings — it doesn't rule out the
+      # candidate having MORE members than that (a superset, e.g. a
+      # 3-tax category when the item only carries 2 of those taxes).
+      # Confirm an exact match before reusing it.
+      candidates.find do |tax_category_id|
+        SpreeSquare::TaxCategoryMapping.where(tax_category_id: tax_category_id).count == target_ids.size
+      end
+    end
+
+    def create_composite_tax_category!(tax_mappings)
+      zone = tax_zone!
+      name = tax_mappings.map(&:name).join(' + ').presence || 'Square Tax'
+      category = Spree::TaxCategory.find_by(name: name) || Spree::TaxCategory.create!(name: name)
+
+      tax_mappings.each do |tm|
+        next if SpreeSquare::TaxCategoryMapping.exists?(tax_category_id: category.id, tax_mapping_id: tm.id)
+
+        rate = Spree::TaxRate.create!(
+          zone: zone,
+          tax_category: category,
+          name: tm.name,
+          amount: (tm.percentage || 0) / 100.0,
+          included_in_price: tm.included_in_price,
+          calculator_type: 'Spree::Calculator::DefaultTax'
+        )
+        SpreeSquare::TaxCategoryMapping.create!(tax_category: category, tax_mapping: tm, tax_rate: rate)
+      end
+
+      category
+    end
+
+    def non_taxable_category
+      @non_taxable_category ||= Spree::TaxCategory.find_by(name: 'Non-taxable') ||
+                                 Spree::TaxCategory.create!(name: 'Non-taxable')
+    end
+
+    # The store's own tax Zone, set up once via `spree_square:ensure_tax_zone`
+    # (Square's Catalog API has no jurisdiction concept to sync — this is
+    # entirely Spree-side). Raises rather than silently skipping: importing
+    # a real tax with no zone to attach it to is a setup error, not a
+    # recoverable no-op.
+    def tax_zone!
+      @tax_zone ||= begin
+        state = Spree::StockLocation.find_by(default: true)&.state
+        zone = state && Spree::Zone.where(kind: 'state')
+                                    .joins(:zone_members)
+                                    .where(spree_zone_members: { zoneable_type: 'Spree::State', zoneable_id: state.id })
+                                    .first
+        raise "No tax Zone found for the store's state — run `bin/rails spree_square:ensure_tax_zone` first." if zone.blank?
+
+        zone
+      end
     end
   end
 end

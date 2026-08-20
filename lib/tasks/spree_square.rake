@@ -74,4 +74,86 @@ namespace :spree_square do
     puts '---'
     puts 'Set SQUARE_WEBHOOK_SIGNATURE_KEY in .env to the value above, then recreate the web container.'
   end
+
+  desc "Phase 8 M1: ensure a state-scoped tax Zone exists for the store's own StockLocation state"
+  task ensure_tax_zone: :environment do
+    stock_location = Spree::StockLocation.find_by(default: true)
+    abort 'No default Spree::StockLocation found.' if stock_location.blank?
+
+    state = stock_location.state
+    abort "StockLocation ##{stock_location.id} (#{stock_location.name}) has no state set — set one before running this task." if state.blank?
+
+    # Named/keyed off the state itself (not hardcoded "OH") and re-derived
+    # from StockLocation on every run — if that address ever moves to a
+    # different state, re-running this task points the zone at the new one
+    # instead of silently leaving a stale zone behind.
+    zone = Spree::Zone.find_or_initialize_by(name: "#{state.abbr} Sales Tax")
+    zone.kind = 'state'
+    zone.description = "Sales tax zone for #{state.name} — tracks Spree::StockLocation's own state; see spree_square:ensure_tax_zone." if zone.has_attribute?(:description)
+    zone.save!
+    zone.state_ids = [state.id]
+
+    puts "Zone ##{zone.id} '#{zone.name}' now contains exactly: #{zone.states.pluck(:abbr).join(', ')}"
+  end
+
+  desc 'Phase 8 M4: create a real 8% Sales Tax object in Square Sandbox, attach it to every item, and tax delivery fees to match'
+  task setup_demo_tax: :environment do
+    # credential: nil forces the SQUARE_ACCESS_TOKEN env fallback instead of
+    # this store's connected OAuth credential — the OAuth connection was
+    # authorized without ITEMS_WRITE (confirmed live: its scopes list is
+    # MERCHANT_PROFILE_READ/ITEMS_READ/INVENTORY_*/ORDERS_*/PAYMENTS_*, no
+    # ITEMS_WRITE), the same scope seed_demo_menu.rake's item-creation
+    # calls need. A one-time catalog-admin task like this one reasonably
+    # uses the broader sandbox token rather than re-running the OAuth
+    # consent flow just to add a scope.
+    client = SpreeSquare::Client.new(credential: nil)
+
+    puts 'Creating "Sales Tax" (8.0%) catalog object in Square...'
+    response = client.catalog.batch_upsert(
+      idempotency_key: SecureRandom.uuid,
+      batches: [{
+        objects: [{
+          type: 'TAX',
+          id: '#tax-sales-tax',
+          tax_data: {
+            name: 'Sales Tax',
+            calculation_phase: 'TAX_SUBTOTAL_PHASE',
+            inclusion_type: 'ADDITIVE',
+            percentage: '8.0',
+            applies_to_custom_amounts: true,
+            enabled: true
+          }
+        }]
+      }]
+    )
+    tax_id = response.id_mappings.find { |m| m.client_object_id == '#tax-sales-tax' }&.object_id_
+    abort 'Square did not return an id for the new tax object.' if tax_id.blank?
+    puts "Created tax #{tax_id}"
+
+    item_ids = client.catalog.search(object_types: ['ITEM']).objects.to_a.map(&:id)
+    abort 'No items found in the Square catalog — run spree_square:seed_demo_menu first.' if item_ids.empty?
+
+    puts "Attaching to #{item_ids.size} item(s)..."
+    client.catalog.update_item_taxes(item_ids: item_ids, taxes_to_enable: [tax_id])
+
+    puts 'Waiting for Square search index to catch up...'
+    sleep 20
+
+    puts 'Importing into Spree...'
+    result = SpreeSquare::CatalogImporter.call
+    puts "Imported #{result.taxes_count} tax(es) and re-synced #{result.items_count} item(s)."
+
+    tax_mapping = SpreeSquare::TaxMapping.find_by(square_tax_id: tax_id)
+    tax_category = tax_mapping&.tax_category_mappings&.first&.tax_category
+    if tax_category.blank?
+      puts 'Warning: could not resolve the resulting Spree::TaxCategory — did any item actually import with this tax attached?'
+    else
+      # Square's Catalog API has no concept of a delivery fee at all — this
+      # part is Spree-only, applying the same tax category to every
+      # shipping method per the confirmed decision (delivery fee taxed the
+      # same as food).
+      count = Spree::ShippingMethod.update_all(tax_category_id: tax_category.id)
+      puts "Set tax_category '#{tax_category.name}' on #{count} shipping method(s): #{Spree::ShippingMethod.pluck(:name).join(', ')}"
+    end
+  end
 end

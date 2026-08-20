@@ -13,6 +13,7 @@ Spree::Core::Engine.add_routes do
   namespace :admin do
     resources :square_order_mappings, only: [:index]
     resources :square_webhook_events, only: [:index]
+    resources :square_tax_rates, only: [:index]
 
     # Self-service OAuth connection (see Spree::Admin::SquareOauthController).
     # Explicit named routes rather than `resource :square_oauth` — the
