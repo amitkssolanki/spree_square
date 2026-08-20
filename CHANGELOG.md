@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented here.
 
+## 0.2.1
+
+Fixes a real bug in `v0.2.0`, found running it against production traffic (not caught by specs —
+sandbox/local dev has no registered webhook to race against): the concurrency fix for the composite
+tax category race (see `v0.2.0`'s own changelog entry) was itself Postgres-only
+(`pg_advisory_xact_lock`), breaking outright on the gem's own SQLite/MySQL-tested dummy app, and
+production actually hit the race it was meant to prevent — this rake task's own `CatalogImporter.call`
+ran concurrently with a real `catalog.version.updated` webhook Square's own `update_item_taxes` call
+fired back mid-run, leaving 44 products correctly on one "Sales Tax" category and 1 stray product on a
+duplicate with its own duplicate rate (same 8% amount either way — no wrong tax charged, but a real
+data duplication). Replaced with `SpreeSquare::TaxCombination`, a real unique index raced via
+`create_or_find_by!` — portable across every adapter this gem supports. `v0.2.0` is yanked; upgrade
+directly to this version.
+
 ## 0.2.0
 
 - **Sales tax, sourced from Square's own catalog tax config.** Square's Catalog API has no concept
