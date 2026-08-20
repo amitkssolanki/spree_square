@@ -117,6 +117,33 @@ RSpec.describe 'SpreeSquare::CatalogObjectMapper tax handling (Phase 8)' do
       expect(Spree::TaxRate.count).to eq(1)
     end
 
+    it 'calling composite_tax_category twice for the same combination is idempotent (regression check for a real production bug)' do
+      # Found live against production, not in specs: this rake task's own
+      # CatalogImporter.call can run concurrently with a real
+      # catalog.version.updated webhook that Square's own update_item_taxes
+      # call fires back mid-run (sandbox/local dev, with no registered
+      # webhook, never exercises this) — two processes each finding "no
+      # matching category yet" independently created one, leaving two
+      # "Sales Tax" categories with duplicate rates. The real fix is
+      # SpreeSquare::TaxCombination's unique `signature` index, raced via
+      # `create_or_find_by!` (see composite_tax_category's own comment for
+      # why that's portable across adapters where a DB-specific advisory
+      # lock wouldn't be) — RSpec's transactional-fixture strategy makes
+      # genuinely racing two DB connections impractical here, so this spec
+      # instead pins the still-meaningful invariant the fix must preserve:
+      # calling it twice for the same combination never creates a second
+      # category or a second TaxCombination row.
+      mapper.map_tax(tax_object(id: 'sq_tax_1', name: 'Sales Tax', percentage: '8.0'))
+      tax_mappings = SpreeSquare::TaxMapping.where(square_tax_id: 'sq_tax_1').to_a
+
+      first = mapper.send(:composite_tax_category, tax_mappings)
+      second = mapper.send(:composite_tax_category, tax_mappings)
+
+      expect(second).to eq(first)
+      expect(Spree::TaxCategory.where(name: 'Sales Tax').count).to eq(1)
+      expect(SpreeSquare::TaxCombination.count).to eq(1)
+    end
+
     it 'an item carrying two stacked taxes gets its own composite category with two rates, distinct from either tax alone' do
       mapper.map_tax(tax_object(id: 'sq_tax_1', name: 'Sales Tax', percentage: '8.0'))
       mapper.map_tax(tax_object(id: 'sq_tax_2', name: 'Bottle Tax', percentage: '1.0'))

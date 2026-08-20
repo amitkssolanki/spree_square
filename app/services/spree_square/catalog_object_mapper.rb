@@ -313,33 +313,47 @@ module SpreeSquare
       # will resolve it correctly once the tax itself is known.
       return non_taxable_category if tax_mappings.empty?
 
-      existing_category_id = matching_composite_category_id(tax_mappings)
-      return Spree::TaxCategory.find(existing_category_id) if existing_category_id
-
-      create_composite_tax_category!(tax_mappings)
+      category = composite_tax_category(tax_mappings)
+      ensure_tax_rates!(category, tax_mappings)
+      category
     end
 
-    def matching_composite_category_id(tax_mappings)
-      target_ids = tax_mappings.map(&:id)
-      candidates = SpreeSquare::TaxCategoryMapping.where(tax_mapping_id: target_ids)
-                                                    .group(:tax_category_id)
-                                                    .having('COUNT(*) = ?', target_ids.size)
-                                                    .pluck(:tax_category_id)
+    # A real bug found running this against production: the same catalog
+    # import can run concurrently more than once (this rake task's own
+    # `CatalogImporter.call` racing a real `catalog.version.updated`
+    # webhook that Square's own `update_item_taxes` call fires back mid-run
+    # — sandbox/local dev, with no registered webhook, never exercises
+    # this). Two processes each finding "no matching category yet" and
+    # independently creating one left two "Sales Tax" categories with
+    # duplicate rates. `SpreeSquare::TaxCombination#signature` is a real
+    # unique index — `create_or_find_by!` races against it exactly the way
+    # Rails intends (portable across Postgres/MySQL/SQLite, unlike a
+    # database-specific advisory lock): the losing side's block-created
+    # Spree::TaxCategory rolls back with it (create_or_find_by! wraps the
+    # attempt in its own transaction) and it transparently re-finds what
+    # the winner created instead.
+    def composite_tax_category(tax_mappings)
+      signature = SpreeSquare::TaxCombination.signature_for(tax_mappings.map(&:id))
 
-      # The HAVING above only proves the candidate contains at least
-      # `target_ids.size` of OUR mappings — it doesn't rule out the
-      # candidate having MORE members than that (a superset, e.g. a
-      # 3-tax category when the item only carries 2 of those taxes).
-      # Confirm an exact match before reusing it.
-      candidates.find do |tax_category_id|
-        SpreeSquare::TaxCategoryMapping.where(tax_category_id: tax_category_id).count == target_ids.size
+      # `create_or_find_by!`'s block runs while *building* the record, before
+      # the create attempt that its own race-safety depends on — so it can
+      # run more than once even with no real race at all (confirmed live: a
+      # second, non-concurrent call in the same process re-runs this block
+      # and only then discovers the TaxCombination already exists). The
+      # block itself must therefore be safe to run repeatedly — plain
+      # `Spree::TaxCategory.create!` isn't, since core validates `name`
+      # uniqueness and a second run raises `RecordInvalid` before this
+      # method's own race-safety ever gets a chance to matter.
+      combination = SpreeSquare::TaxCombination.create_or_find_by!(signature: signature) do |c|
+        name = tax_mappings.map(&:name).join(' + ').presence || 'Square Tax'
+        c.tax_category = Spree::TaxCategory.find_by(name: name) || Spree::TaxCategory.create!(name: name)
       end
+
+      combination.tax_category
     end
 
-    def create_composite_tax_category!(tax_mappings)
+    def ensure_tax_rates!(category, tax_mappings)
       zone = tax_zone!
-      name = tax_mappings.map(&:name).join(' + ').presence || 'Square Tax'
-      category = Spree::TaxCategory.find_by(name: name) || Spree::TaxCategory.create!(name: name)
 
       tax_mappings.each do |tm|
         next if SpreeSquare::TaxCategoryMapping.exists?(tax_category_id: category.id, tax_mapping_id: tm.id)
@@ -353,9 +367,14 @@ module SpreeSquare
           calculator_type: 'Spree::Calculator::DefaultTax'
         )
         SpreeSquare::TaxCategoryMapping.create!(tax_category: category, tax_mapping: tm, tax_rate: rate)
+      rescue ActiveRecord::RecordNotUnique
+        # A concurrent import created this exact (category, tax) row first
+        # (same class of race `composite_tax_category` guards against, just
+        # a narrower window) — the orphaned rate this attempt already
+        # created never got a join row and is safe to drop; the other
+        # side's row is what matters.
+        rate&.destroy
       end
-
-      category
     end
 
     def non_taxable_category
