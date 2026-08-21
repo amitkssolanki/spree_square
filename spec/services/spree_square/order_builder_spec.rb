@@ -104,6 +104,81 @@ RSpec.describe SpreeSquare::OrderBuilder do
     end
   end
 
+  describe 'a line item whose product carries a synced Square tax' do
+    # Builds the tax_category through the real Phase 8 pipeline
+    # (SpreeSquare::CatalogObjectMapper#map_tax/#resolve_tax_category) rather
+    # than hand-assembling TaxCategoryMapping/TaxRate rows — matches
+    # catalog_object_mapper_tax_spec.rb's own established pattern and
+    # exercises the exact path production data actually goes through.
+    let(:state) { create(:state, name: 'Ohio', abbr: 'OH') }
+    let!(:tax_zone) { create(:zone, name: 'OH Sales Tax', kind: 'state').tap { |z| z.members.create!(zoneable: state) } }
+    let!(:tax_default_stock_location) { create(:stock_location, default: true, state: state, country: state.country) }
+    let(:mapper) { SpreeSquare::CatalogObjectMapper.new }
+
+    def square_object(id:, type:, version: 1, **data_by_key)
+      data_key = "#{type.downcase}_data"
+      double("Square::Types::CatalogObject(#{type})", id: id, type: type, version: version,
+                                                        **{ data_key.to_sym => OpenStruct.new(data_by_key[data_key.to_sym] || {}) })
+    end
+
+    let(:tax_category) do
+      mapper.map_tax(square_object(id: 'sq_tax_1', type: 'TAX',
+                                    tax_data: { name: 'Sales Tax', percentage: '8.0', enabled: true, inclusion_type: 'ADDITIVE' }))
+      taxed_product = mapper.map_item(square_object(
+                                         id: 'sq_item_1', type: 'ITEM',
+                                         item_data: { name: 'Taxable Reference Item', description: nil, variations: [],
+                                                      image_ids: nil, category_id: nil, categories: nil,
+                                                      modifier_list_info: nil, tax_ids: ['sq_tax_1'] }
+                                       ))
+      taxed_product.tax_category
+    end
+
+    before do
+      Spree::ShippingCategory.find_or_create_by!(name: 'Default')
+      Spree::Channel.find_or_create_by!(code: 'online') { |c| c.name = 'Online Store'; c.store = Spree::Store.default }
+      variant.product.update!(tax_category: tax_category)
+    end
+
+    it 'lists the Square tax once at the order level, scoped LINE_ITEM and auto_applied' do
+      tax = payload[:taxes].first
+
+      expect(payload[:taxes].size).to eq(1)
+      expect(tax[:catalog_object_id]).to eq('sq_tax_1')
+      expect(tax[:scope]).to eq('LINE_ITEM')
+      expect(tax[:auto_applied]).to eq(true)
+    end
+
+    it "references that order-level tax's uid from the line item's applied_taxes" do
+      built = payload[:line_items].first
+      order_tax_uid = payload[:taxes].first[:uid]
+
+      expect(built[:applied_taxes]).to eq([{ tax_uid: order_tax_uid }])
+    end
+
+    describe 'a second, non-taxable line item on the same order' do
+      let(:non_taxable_variant) { create(:variant) }
+      let!(:second_line_item) do
+        create(:line_item, order: order, variant: non_taxable_variant, quantity: 1, price: 4.00)
+      end
+
+      it 'only applies the tax to the taxable line item, and still lists the order-level tax once' do
+        built_second = payload[:line_items].second
+
+        expect(payload[:taxes].size).to eq(1)
+        expect(built_second[:applied_taxes]).to be_nil
+      end
+    end
+  end
+
+  describe 'a line item whose product has no tax_category (untaxed, matches pre-fix behavior)' do
+    it 'includes no applied_taxes on the line item and no order-level taxes array' do
+      built = payload[:line_items].first
+
+      expect(built[:applied_taxes]).to be_nil
+      expect(payload[:taxes]).to be_nil
+    end
+  end
+
   describe 'when the order\'s stock location has no Square location mapped' do
     let(:unmapped_stock_location) { create(:stock_location) }
     let!(:shipment) { create(:shipment, order: order, stock_location: unmapped_stock_location) }

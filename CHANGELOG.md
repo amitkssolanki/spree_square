@@ -2,6 +2,31 @@
 
 All notable changes to this project are documented here.
 
+## 0.2.2
+
+Fixes a real bug found live comparing a completed order's Spree confirmation against its Square
+receipt: Spree charged $19.42 including $1.44 tax, but the pushed Square ticket/payment showed a
+bare $9.99 with zero tax — every order ever pushed to Square has excluded tax entirely, both from
+the visible receipt and from the EXTERNAL payment amount actually recorded (`OrderPusher` records
+whatever `square_order.total_money` comes back as, so an untaxed Square order also under-recorded
+the real payment total).
+
+Root cause: `OrderBuilder` referenced each line item's `catalog_object_id`, but pointing a Square
+order line item at a taxed `CatalogItem` does **not** make Square auto-compute tax on it — Square's
+Orders API requires the caller to explicitly build an order-level `taxes` array (one entry per
+distinct tax, `scope: 'LINE_ITEM'`, `auto_applied: true`, referencing the tax's own
+`catalog_object_id`) and reference it per line item via `applied_taxes: [{tax_uid: ...}]`. This was
+never built — a Phase-1-era design decision (deliberately send no tax/discount data, to keep
+Square's computed total exactly matching the EXTERNAL payment) made before Phase 8 added any tax
+config to sync in the first place, never revisited once it did.
+
+Fixed by resolving each line item's Square tax id(s) via the same `Spree::TaxCategory ->
+TaxCategoryMapping -> TaxMapping` path Phase 8's own `CatalogObjectMapper#resolve_tax_category`
+already built (walked in reverse), and building the order-level `taxes`/line-item `applied_taxes`
+Square actually requires. Delivery/shipping fees are still deliberately not sent to Square (no
+shipping line item is pushed at all) — out of scope for this fix, matching an explicit product
+decision. 5 new specs (114 total, up from 109), Brakeman clean.
+
 ## 0.2.1
 
 Fixes a real bug in `v0.2.0`, found running it against production traffic (not caught by specs —
