@@ -29,7 +29,11 @@ RSpec.describe SpreeSquare::OrderBuilder do
   # explicit email: override — assert against order.email itself rather
   # than a literal string.
   let(:order) { create(:order, state: 'complete', completed_at: Time.current) }
-  let!(:shipment) { create(:shipment, order: order, stock_location: stock_location) }
+  # cost: 0 — the factory default (100.00) would otherwise silently add a
+  # delivery-fee line item to every test in this file via
+  # #build_delivery_line_item, which is exactly what the dedicated "delivery
+  # fee" describe block below tests explicitly and deliberately.
+  let!(:shipment) { create(:shipment, order: order, stock_location: stock_location, cost: 0) }
   let!(:line_item) { create(:line_item, order: order, variant: variant, quantity: 2, price: 16.95) }
 
   # .reload: `order` may already have cached an empty `shipments`
@@ -202,6 +206,88 @@ RSpec.describe SpreeSquare::OrderBuilder do
 
       expect(built[:applied_taxes]).to be_nil
       expect(payload[:taxes]).to be_nil
+    end
+  end
+
+  describe 'the delivery fee' do
+    it 'a $0 shipment (Pickup) adds no delivery line item' do
+      # The shared `shipment` (let! above) already has cost: 0 for this
+      # exact reason — asserted explicitly here so a regression in the
+      # cost_cents.zero? guard would actually fail a test, not just go
+      # unnoticed the way it would have before this describe block existed.
+      expect(payload[:line_items].size).to eq(1)
+    end
+
+    describe 'a shipment with a nonzero cost' do
+      let!(:shipment) do
+        create(:shipment, order: order, stock_location: stock_location, cost: 7.99).tap do |s|
+          s.shipping_rates.update_all(cost: 7.99)
+        end
+      end
+
+      it 'adds it as an ad-hoc line item — real name/price, no catalog_object_id' do
+        delivery_line = payload[:line_items].find { |li| li[:name] != line_item.name }
+
+        expect(delivery_line).not_to be_nil
+        expect(delivery_line[:catalog_object_id]).to be_nil
+        expect(delivery_line[:quantity]).to eq('1')
+        expect(delivery_line[:base_price_money]).to eq(amount: 799, currency: 'USD')
+      end
+    end
+
+    describe 'a shipment whose selected rate carries a Square-synced tax_category' do
+      let(:state) { create(:state, name: 'Ohio', abbr: 'OH') }
+      let!(:tax_zone) { create(:zone, name: 'OH Sales Tax', kind: 'state').tap { |z| z.members.create!(zoneable: state) } }
+      let!(:tax_default_stock_location) { create(:stock_location, default: true, state: state, country: state.country) }
+      let(:mapper) { SpreeSquare::CatalogObjectMapper.new }
+
+      def square_object(id:, type:, version: 1, **data_by_key)
+        data_key = "#{type.downcase}_data"
+        double("Square::Types::CatalogObject(#{type})", id: id, type: type, version: version,
+                                                          **{ data_key.to_sym => OpenStruct.new(data_by_key[data_key.to_sym] || {}) })
+      end
+
+      let(:delivery_tax_category) do
+        mapper.map_tax(square_object(id: 'sq_tax_delivery', type: 'TAX',
+                                      tax_data: { name: 'Sales Tax', percentage: '8.0', enabled: true, inclusion_type: 'ADDITIVE' }))
+        product = mapper.map_item(square_object(
+                                     id: 'sq_item_delivery_ref', type: 'ITEM',
+                                     item_data: { name: 'Delivery Tax Reference Item', description: nil, variations: [],
+                                                  image_ids: nil, category_id: nil, categories: nil,
+                                                  modifier_list_info: nil, tax_ids: ['sq_tax_delivery'] }
+                                   ))
+        product.tax_category
+      end
+
+      let!(:shipment) do
+        # Force these (in this exact order) before delivery_tax_category's
+        # own map_item call — its internal tax_zone! does a raw DB lookup
+        # for the default stock location, not something RSpec's `let!`
+        # hook-ordering guarantees here: this file's outer-scope
+        # `let!(:shipment)` (this describe overrides it) has its `before`
+        # hook registered OUTSIDE this nested group, so it fires before any
+        # of this group's own `let!`s, however `shipment` itself resolves
+        # to this override at call time.
+        tax_default_stock_location
+        tax_zone
+
+        create(:shipment, order: order, stock_location: stock_location, cost: 7.99).tap do |s|
+          rate = s.shipping_rates.first
+          rate.update!(cost: 7.99, tax_rate: Spree::TaxRate.where(tax_category: delivery_tax_category).first)
+        end
+      end
+
+      before do
+        Spree::ShippingCategory.find_or_create_by!(name: 'Default')
+        Spree::Channel.find_or_create_by!(code: 'online') { |c| c.name = 'Online Store'; c.store = Spree::Store.default }
+      end
+
+      it "applies that tax to the delivery line item and lists it once at the order level" do
+        delivery_line = payload[:line_items].find { |li| li[:name] != line_item.name }
+
+        expect(delivery_line[:applied_taxes]).to eq([{ tax_uid: 'sq_tax_delivery' }])
+        expect(payload[:taxes]).to eq([{ uid: 'sq_tax_delivery', catalog_object_id: 'sq_tax_delivery', scope: 'LINE_ITEM' }])
+      end
     end
   end
 

@@ -2,6 +2,31 @@
 
 All notable changes to this project are documented here.
 
+## 0.2.5
+
+Extends the `v0.2.2`-`v0.2.4` tax fix to the delivery fee, so a delivery order's Square receipt fully
+reconciles with what Spree actually charged — not just the item, but the delivery fee and its tax
+too. Previously the delivery/shipping fee was never sent to Square at all, so a DoorDash/Uber Direct
+order's Square ticket/EXTERNAL payment still under-recorded the real total (item + item tax only,
+missing the delivery fee and its own tax).
+
+`OrderBuilder` now pushes the delivery fee as an **ad-hoc line item** — no `catalog_object_id`, since
+a live-quoted delivery fee (priced per order/distance) has no fixed CatalogItem in Square to
+reference; this reuses the exact "unmapped variant" fallback shape already proven for line items, not
+a new mechanism. No Square-side catalog/POS configuration is needed — ad-hoc line items accept any
+price at request time. Skipped entirely for a $0 shipment (Pickup), so the kitchen ticket doesn't
+carry a pointless zero-amount line. Its tax resolves through `Spree::Shipment#tax_category`
+(`selected_shipping_rate.tax_rate.tax_category`, set on all three `Spree::ShippingMethod` records by
+Phase 8's `setup_demo_tax`) via the same `TaxCategoryMapping` path item tax already uses — refactored
+into a shared `resolve_square_tax_ids_for_category`.
+
+Verified live against production's real Square Sandbox with a real DoorDash-delivery order, run
+through the actual tax-charge methods (`create_tax_charge!`/`create_shipment_tax_charge!`/
+`update_with_updater!` — not just `update_columns`, which skips them and would have shown a false
+mismatch): Spree charged $21.32 ($9.99 item + $9.75 delivery + $1.58 combined tax, $0.80 item +
+$0.78 delivery), Square's own receipt/EXTERNAL payment showed the exact same $21.32 and the exact
+same $1.58 tax split. 118 examples (5 new), Brakeman clean.
+
 ## 0.2.4
 
 Fixes a real bug found live pushing an actual order to production's Square Sandbox (not caught by
