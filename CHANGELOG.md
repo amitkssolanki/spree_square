@@ -12,7 +12,10 @@ That field reflects whether *Square itself* inferred the tax purely from catalog
 something a caller explicitly attaching a tax via `taxes`/`applied_taxes` (this gem's whole
 approach, since Square doesn't auto-infer tax from a line item's `catalog_object_id` alone) is
 allowed to set. Removed it from the built payload — `build_order_tax` now sends only `uid`,
-`catalog_object_id`, and `scope`. 115 examples, Brakeman clean.
+`catalog_object_id`, and `scope`. 115 examples, Brakeman clean. Re-verified live against production's
+real Square Sandbox after the fix: a $9.99 Loaded Nachos order pushed cleanly, Square's own `taxes`
+array showed `["Sales Tax", "8.0", 80]`, and the recorded EXTERNAL payment ($10.79) exactly matched
+what Spree charged the customer.
 
 ## 0.2.3
 
