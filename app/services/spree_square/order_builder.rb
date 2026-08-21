@@ -19,14 +19,17 @@ module SpreeSquare
       location_mapping = location_mapping_for(order)
       raise "No Square location mapped for order #{order.number}" unless location_mapping
 
-      tax_uids_by_square_tax_id = {}
-      built_line_items = order.line_items.map { |line_item| build_line_item(line_item, tax_uids_by_square_tax_id) }
+      # Memoized per tax_category (not per line item) — an order commonly has
+      # several line items sharing the same product/tax_category, and this
+      # avoids re-querying TaxCategoryMapping for each one.
+      @tax_ids_by_category_id = {}
+      built_line_items = order.line_items.map { |line_item| build_line_item(line_item) }
 
       {
         location_id: location_mapping.square_location_id,
         reference_id: order.number,
         line_items: built_line_items,
-        taxes: tax_uids_by_square_tax_id.map { |square_tax_id, uid| build_order_tax(square_tax_id, uid) }.presence,
+        taxes: built_line_items.flat_map { |li| li[:applied_taxes]&.map { |t| t[:tax_uid] } || [] }.uniq.map { |id| build_order_tax(id) }.presence,
         fulfillments: [build_fulfillment(order)]
       }.compact
     end
@@ -61,7 +64,7 @@ module SpreeSquare
       SpreeSquare::LocationMapping.find_by(spree_stock_location_id: stock_location.id)
     end
 
-    def build_line_item(line_item, tax_uids_by_square_tax_id)
+    def build_line_item(line_item)
       currency = (line_item.currency || 'USD').upcase
       catalog_mapping = SpreeSquare::CatalogMapping.find_by(
         spree_variant_id: line_item.variant_id,
@@ -71,10 +74,12 @@ module SpreeSquare
       modifier_total_cents = modifiers.sum(&:price_cents_snapshot)
       base_price_cents = (line_item.price * 100).round - modifier_total_cents
 
-      applied_taxes = resolve_square_tax_ids(line_item).map do |square_tax_id|
-        uid = (tax_uids_by_square_tax_id[square_tax_id] ||= SecureRandom.uuid)
-        { tax_uid: uid }
-      end
+      # square_tax_id (the CatalogTax's own object id, already globally
+      # unique within the store's catalog) doubles as the tax's `uid` here —
+      # no need to mint a fresh SecureRandom uid and thread it through, since
+      # every reference to the same tax across line items naturally resolves
+      # to the same value.
+      applied_taxes = resolve_square_tax_ids(line_item).map { |square_tax_id| { tax_uid: square_tax_id } }
 
       {
         quantity: line_item.quantity.to_s,
@@ -94,9 +99,9 @@ module SpreeSquare
       }
     end
 
-    def build_order_tax(square_tax_id, uid)
+    def build_order_tax(square_tax_id)
       {
-        uid: uid,
+        uid: square_tax_id,
         catalog_object_id: square_tax_id,
         scope: 'LINE_ITEM',
         auto_applied: true
@@ -111,14 +116,25 @@ module SpreeSquare
     # Non-taxable products (no tax_category, or a category with no
     # TaxCategoryMapping rows — e.g. modifiers-only pricing quirks) simply
     # get no applied_taxes, same as today.
+    #
+    # Filters to TaxMapping#enabled — a disabled Square tax is soft-deleted
+    # on the Spree::TaxRate side (see CatalogObjectMapper#sync_enabled_state!,
+    # which destroys/restores the *rate*, not this TaxCategoryMapping/
+    # TaxMapping join), so Spree's own Spree::TaxRate.adjust already excludes
+    # it via that paranoid scope. Without this filter, a disabled tax would
+    # still get sent to Square (which would auto-compute and add it into
+    # total_money) even though the customer was never actually charged it by
+    # Spree — inflating the EXTERNAL payment OrderPusher records above what
+    # Spree collected. Found in review, before this ever reached production.
     def resolve_square_tax_ids(line_item)
       tax_category = line_item.variant&.product&.tax_category
       return [] if tax_category.nil?
 
-      SpreeSquare::TaxCategoryMapping
+      @tax_ids_by_category_id[tax_category.id] ||=
+        SpreeSquare::TaxCategoryMapping
         .where(tax_category: tax_category)
         .includes(:tax_mapping)
-        .filter_map { |mapping| mapping.tax_mapping&.square_tax_id }
+        .filter_map { |mapping| mapping.tax_mapping&.square_tax_id if mapping.tax_mapping&.enabled }
         .uniq
     end
   end

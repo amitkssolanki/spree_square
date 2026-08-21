@@ -168,6 +168,29 @@ RSpec.describe SpreeSquare::OrderBuilder do
         expect(built_second[:applied_taxes]).to be_nil
       end
     end
+
+    describe 'when that tax is later disabled in Square' do
+      # Regression test: found in review before this ever reached production
+      # — disabling a tax soft-deletes the Spree::TaxRate (so Spree's own
+      # checkout correctly stops charging it) but leaves the
+      # TaxCategoryMapping/TaxMapping rows themselves in place. Without
+      # filtering on TaxMapping#enabled, OrderBuilder would still send the
+      # disabled tax to Square, which would auto-compute and add it to
+      # total_money — charging the customer's EXTERNAL payment for a tax
+      # Spree never actually collected.
+      before do
+        tax_category # materialize it (and the tax as enabled) first
+        mapper.map_tax(square_object(id: 'sq_tax_1', type: 'TAX', version: 2,
+                                      tax_data: { name: 'Sales Tax', percentage: '8.0', enabled: false, inclusion_type: 'ADDITIVE' }))
+      end
+
+      it 'no longer sends that tax to Square at all' do
+        built = payload[:line_items].first
+
+        expect(built[:applied_taxes]).to be_nil
+        expect(payload[:taxes]).to be_nil
+      end
+    end
   end
 
   describe 'a line item whose product has no tax_category (untaxed, matches pre-fix behavior)' do

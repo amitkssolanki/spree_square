@@ -2,6 +2,26 @@
 
 All notable changes to this project are documented here.
 
+## 0.2.3
+
+Fixes a real bug caught in code review of `v0.2.2` (before it reached production): the new
+`OrderBuilder#resolve_square_tax_ids` resolved a product's Square tax id(s) via `TaxCategoryMapping`
+with no check on `TaxMapping#enabled`. Disabling a tax in Square soft-deletes the backing
+`Spree::TaxRate` (so Spree's own checkout correctly stops charging it) but leaves the
+`TaxCategoryMapping`/`TaxMapping` rows themselves in place — so a disabled tax was still resolved,
+still sent to Square in `taxes`/`applied_taxes`, and Square would still auto-compute and add it into
+`total_money`, meaning `OrderPusher`'s EXTERNAL payment would charge the customer's order for tax
+Spree never actually collected. Fixed by filtering to `TaxMapping#enabled` (new regression spec:
+disabling a tax via the real `CatalogObjectMapper#map_tax` pipeline and confirming it's excluded).
+
+Also, while already touching this code: memoized Square-tax-id resolution per `tax_category`
+instead of re-querying per line item (an order commonly has several line items sharing one
+category), and dropped the `SecureRandom.uuid`-per-tax indirection in favor of using each tax's
+already-unique `square_tax_id` directly as its `uid` — removes a mutable accumulator hash that had
+to be threaded through `build_line_item` for no functional reason.
+
+115 examples (1 new), Brakeman clean.
+
 ## 0.2.2
 
 Fixes a real bug found live comparing a completed order's Spree confirmation against its Square
