@@ -99,12 +99,18 @@ module SpreeSquare
       }
     end
 
+    # `auto_applied` is deliberately NOT set here — found live against the
+    # real Square Sandbox (not caught by mocked specs): Square rejects it as
+    # a read-only, server-computed field on CreateOrder
+    # ("order.taxes[0].auto_applied ... calculated and cannot be set by a
+    # client"). It reflects whether Square itself inferred the tax from
+    # catalog config, which isn't what's happening here — we explicitly
+    # attach it via this `taxes` array + each line item's `applied_taxes`.
     def build_order_tax(square_tax_id)
       {
         uid: square_tax_id,
         catalog_object_id: square_tax_id,
-        scope: 'LINE_ITEM',
-        auto_applied: true
+        scope: 'LINE_ITEM'
       }
     end
 

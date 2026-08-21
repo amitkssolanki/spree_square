@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented here.
 
+## 0.2.4
+
+Fixes a real bug found live pushing an actual order to production's Square Sandbox (not caught by
+`v0.2.3`'s mocked specs, since none of them hit the real API): Square's real `CreateOrder` endpoint
+rejects `auto_applied` on an order-level tax entry outright —
+`"Read-only field is calculated and cannot be set by a client." field: "order.taxes[0].auto_applied"`.
+That field reflects whether *Square itself* inferred the tax purely from catalog config; it isn't
+something a caller explicitly attaching a tax via `taxes`/`applied_taxes` (this gem's whole
+approach, since Square doesn't auto-infer tax from a line item's `catalog_object_id` alone) is
+allowed to set. Removed it from the built payload — `build_order_tax` now sends only `uid`,
+`catalog_object_id`, and `scope`. 115 examples, Brakeman clean.
+
 ## 0.2.3
 
 Fixes a real bug caught in code review of `v0.2.2` (before it reached production): the new

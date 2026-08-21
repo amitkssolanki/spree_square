@@ -139,13 +139,16 @@ RSpec.describe SpreeSquare::OrderBuilder do
       variant.product.update!(tax_category: tax_category)
     end
 
-    it 'lists the Square tax once at the order level, scoped LINE_ITEM and auto_applied' do
+    it 'lists the Square tax once at the order level, scoped LINE_ITEM, with no auto_applied field' do
       tax = payload[:taxes].first
 
       expect(payload[:taxes].size).to eq(1)
       expect(tax[:catalog_object_id]).to eq('sq_tax_1')
       expect(tax[:scope]).to eq('LINE_ITEM')
-      expect(tax[:auto_applied]).to eq(true)
+      # auto_applied is deliberately omitted, not set to false — Square's
+      # real CreateOrder API rejects it outright as a read-only,
+      # server-computed field (found live against the real Sandbox).
+      expect(tax).not_to have_key(:auto_applied)
     end
 
     it "references that order-level tax's uid from the line item's applied_taxes" do
