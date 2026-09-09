@@ -43,7 +43,7 @@ RSpec.describe 'SpreeSquare::CatalogObjectMapper tax handling (Phase 8)' do
     it 'creates a SpreeSquare::TaxMapping mirroring the Square percentage/inclusion' do
       mapper.map_tax(tax_object(id: 'sq_tax_1', name: 'Sales Tax', percentage: '8.0'))
 
-      mapping = SpreeSquare::TaxMapping.find_by(square_tax_id: 'sq_tax_1')
+      mapping = SpreePos::TaxMapping.find_by(external_id: 'sq_tax_1')
       expect(mapping.name).to eq('Sales Tax')
       expect(mapping.percentage).to eq(8.0)
       expect(mapping.included_in_price).to be false
@@ -134,14 +134,14 @@ RSpec.describe 'SpreeSquare::CatalogObjectMapper tax handling (Phase 8)' do
       # calling it twice for the same combination never creates a second
       # category or a second TaxCombination row.
       mapper.map_tax(tax_object(id: 'sq_tax_1', name: 'Sales Tax', percentage: '8.0'))
-      tax_mappings = SpreeSquare::TaxMapping.where(square_tax_id: 'sq_tax_1').to_a
+      tax_mappings = SpreePos::TaxMapping.where(external_id: 'sq_tax_1').to_a
 
       first = mapper.send(:composite_tax_category, tax_mappings)
       second = mapper.send(:composite_tax_category, tax_mappings)
 
       expect(second).to eq(first)
       expect(Spree::TaxCategory.where(name: 'Sales Tax').count).to eq(1)
-      expect(SpreeSquare::TaxCombination.count).to eq(1)
+      expect(SpreePos::TaxCombination.count).to eq(1)
     end
 
     it 'an item carrying two stacked taxes gets its own composite category with two rates, distinct from either tax alone' do
