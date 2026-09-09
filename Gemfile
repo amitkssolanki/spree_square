@@ -25,4 +25,15 @@ end
 
 gem 'propshaft'
 
+# Pinned below 3.0: json 3.0.2's JSON.parse dropped the second positional
+# options argument that Rails 8.1.3.1's ActiveSupport::JSON.decode (and so
+# every t.json column, including the encrypted-column metadata `encrypts`
+# writes) still calls with. Neither this gem nor spree_pos commits a
+# Gemfile.lock (normal for a library, not an app), so a fresh `bundle
+# install` in a new worktree/clone can freely resolve into the broken
+# version and every JSON-column read raises `ArgumentError: wrong number
+# of arguments (given 2, expected 1)`. Found during Phase 2 integration
+# (see the parallel-agent reports) -- not a spree_square code defect.
+gem 'json', '< 3'
+
 gemspec
