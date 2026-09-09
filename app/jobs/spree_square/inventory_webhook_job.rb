@@ -13,7 +13,7 @@ module SpreeSquare
 
       counts = event.payload.dig('data', 'object', 'inventory_counts') || []
       counts.each do |count|
-        SpreeSquare::InventorySync.call(
+        SpreeSquare::InventoryAdapter.call(
           catalog_object_id: count['catalog_object_id'],
           location_id: count['location_id'],
           quantity: count['quantity'],

@@ -24,7 +24,7 @@ module SpreeSquare
       # kind of drift this job exists to catch, and it wouldn't show up in
       # an IN_STOCK-only result.
       client.inventory.batch_get_counts(location_ids: location_ids).each do |count|
-        SpreeSquare::InventorySync.call(
+        SpreeSquare::InventoryAdapter.call(
           catalog_object_id: count.catalog_object_id,
           location_id: count.location_id,
           quantity: count.quantity,

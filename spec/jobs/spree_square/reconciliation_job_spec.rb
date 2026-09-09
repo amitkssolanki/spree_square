@@ -35,7 +35,7 @@ RSpec.describe SpreeSquare::ReconciliationJob do
       end
 
       it 'reconciles inventory for every mapped Square location, with no states filter' do
-        expect(SpreeSquare::InventorySync).to receive(:call).with(
+        expect(SpreeSquare::InventoryAdapter).to receive(:call).with(
           catalog_object_id: 'sq_var_1', location_id: 'sq_loc_1', quantity: '2', state: 'IN_STOCK'
         )
 
