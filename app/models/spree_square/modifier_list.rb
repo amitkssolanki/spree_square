@@ -1,23 +1,13 @@
 module SpreeSquare
-  # Mirrors a Square MODIFIER_LIST (e.g. "Choose your sauce"). Modeled
-  # separately from Spree's OptionType/Variant system on purpose — Square
-  # modifiers are multi-select, per-line-item customizations, not mutually
-  # exclusive product variations, and forcing them through OptionType would
-  # explode the variant matrix combinatorially.
-  class ModifierList < Spree.base_class
-    self.table_name = 'spree_square_modifier_lists'
-
-    SINGLE = 'SINGLE'.freeze
-    MULTIPLE = 'MULTIPLE'.freeze
-
-    has_many :modifiers, class_name: 'SpreeSquare::Modifier', dependent: :destroy
-    has_many :product_modifier_lists, class_name: 'SpreeSquare::ProductModifierList', dependent: :destroy
-    has_many :products, class_name: 'Spree::Product', through: :product_modifier_lists
-
-    validates :square_modifier_list_id, presence: true, uniqueness: true
-    validates :name, presence: true
-    validates :selection_type, inclusion: { in: [SINGLE, MULTIPLE] }
-
-    def multiple? = selection_type == MULTIPLE
+  # Temporary compatibility shim -- deleted in a later phase (step 19) once
+  # spree_host's admin UI is repointed at SpreePos:: directly. The real
+  # model now lives at SpreePos::ModifierList; this subclass exists only so
+  # spree_host/app/controllers/spree/admin/square_modifier_lists_controller.rb
+  # (out of scope this batch) keeps working unchanged.
+  #
+  # No `type` column exists on spree_pos_modifier_lists, so this is plain AR
+  # subclassing (shares the parent's table via inherited `table_name`) --
+  # not STI.
+  class ModifierList < SpreePos::ModifierList
   end
 end

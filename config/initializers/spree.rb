@@ -2,19 +2,20 @@
 # hash that Spree::Cart::AddItem filters incoming `options:` params through,
 # so it reaches Variant#square_modifier_ids_price_modifier_amount (the
 # initial price) and LineItem#square_modifier_ids (read by
-# SpreeSquare::Cart::AddItem to build the persistent snapshot rows).
+# SpreePos::Cart::AddItem to build the persistent snapshot rows).
 Spree::PermittedAttributes.line_item_attributes << :square_modifier_ids
 
-Spree.dependencies do |dependencies|
-  dependencies.cart_add_item_service = 'SpreeSquare::Cart::AddItem'
-  # cart_compare_line_items_service is NOT the merge gate it looks like —
-  # Spree::LineItems::FindByVariant calls it but discards the result. The
-  # finder itself is the actual hook (see find_line_item_by_variant.rb).
-  dependencies.line_item_by_variant_finder = 'SpreeSquare::FindLineItemByVariant'
-end
+# Phase 2 (sequence step 12c): Cart::AddItem and FindLineItemByVariant moved
+# to spree_pos -- their Spree.dependencies registration now lives in
+# spree_host's own config/initializers/spree.rb (spree_pos has no
+# initializer of its own yet; that consolidation is a later phase step),
+# pointing at SpreePos:: instead of SpreeSquare::.
 
-Spree::Api::Dependencies.product_serializer = 'SpreeSquare::ProductSerializer'
-Spree::Api::Dependencies.line_item_serializer = 'SpreeSquare::LineItemSerializer'
+# Phase 2 (sequence step 12d): both serializers moved to spree_pos (carrying
+# the Spree::Category taxonomy fix verbatim) -- their Spree::Api::Dependencies
+# registration now lives in spree_host's own config/initializers/spree.rb
+# alongside the new :pos_modifier_ids PermittedAttributes entry, for the
+# same reason as the step 12c dependencies above.
 
 # Uncomment lines below to add your own custom business logic
 # such as promotions, shipping methods, etc.
