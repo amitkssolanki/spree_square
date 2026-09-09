@@ -5,56 +5,27 @@ module SpreeSquare
   # CatalogObjectMapper. Categories, modifier lists, and taxes are imported
   # before items so an item can resolve its `category_id` /
   # `modifier_list_info` / `tax_ids` to an already-mapped record.
+  #
+  # Phase 2, step 14 of the multi-POS/multi-location plan: the fetch/
+  # pagination concern (talking to Square) now lives in CatalogAdapter; this
+  # class is the thin job wrapper — fetch, then hand each group to the
+  # mapper in the same fixed order as before.
   class CatalogImporter
     Result = Struct.new(:categories_count, :modifier_lists_count, :taxes_count, :items_count, keyword_init: true)
 
     def self.call = new.call
 
     def call
-      client = SpreeSquare::Client.instance
-      objects, related_by_id = fetch_all(client)
+      fetched = SpreeSquare::CatalogAdapter.new.fetch_all
+      mapper = SpreeSquare::CatalogObjectMapper.new(related_objects_by_id: fetched.related_objects_by_id)
 
-      by_type = objects.group_by(&:type)
-      categories = by_type.fetch('CATEGORY', [])
-      modifier_lists = by_type.fetch('MODIFIER_LIST', [])
-      taxes = by_type.fetch('TAX', [])
-      items = by_type.fetch('ITEM', [])
+      fetched.categories.each { |category| mapper.map_category(category) }
+      fetched.modifier_lists.each { |list| mapper.map_modifier_list(list) }
+      fetched.taxes.each { |tax| mapper.map_tax(tax) }
+      fetched.items.each { |item| mapper.map_item(item) }
 
-      mapper = CatalogObjectMapper.new(related_objects_by_id: related_by_id)
-      categories.each { |category| mapper.map_category(category) }
-      modifier_lists.each { |list| mapper.map_modifier_list(list) }
-      taxes.each { |tax| mapper.map_tax(tax) }
-      items.each { |item| mapper.map_item(item) }
-
-      Result.new(categories_count: categories.size, modifier_lists_count: modifier_lists.size,
-                 taxes_count: taxes.size, items_count: items.size)
-    end
-
-    private
-
-    # Square's search is a single page per call; loop on `cursor` until
-    # exhausted. Fine for a restaurant-sized catalog (dozens to low hundreds
-    # of items) — not built for bulk/enterprise catalogs.
-    def fetch_all(client)
-      objects = []
-      related_by_id = {}
-      cursor = nil
-
-      loop do
-        response = client.catalog.search(
-          object_types: %w[ITEM CATEGORY MODIFIER_LIST TAX],
-          include_related_objects: true,
-          cursor: cursor
-        )
-
-        objects.concat(Array(response.objects))
-        Array(response.related_objects).each { |o| related_by_id[o.id] = o }
-
-        cursor = response.cursor
-        break if cursor.blank?
-      end
-
-      [objects, related_by_id]
+      Result.new(categories_count: fetched.categories.size, modifier_lists_count: fetched.modifier_lists.size,
+                 taxes_count: fetched.taxes.size, items_count: fetched.items.size)
     end
   end
 end
