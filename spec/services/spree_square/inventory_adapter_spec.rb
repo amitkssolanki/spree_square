@@ -1,12 +1,18 @@
 require 'json'
 
-# Characterization spec, written in Phase 0 before InventorySync moves
-# anywhere. `catalog_object_id`/`location_id`/`quantity`/`state` are the real
+# Characterization spec, written in Phase 0 as SpreeSquare::InventorySync's
+# spec, before the class moved anywhere. Phase 2 split InventorySync into
+# provider-neutral SpreePos::InventorySync (StockItem write, see its own
+# spec) and this class, SpreeSquare::InventoryAdapter, which keeps the exact
+# same CatalogMapping/LocationMapping resolution and the exact same public
+# call shape — only the target class changed, per the plan's step 15; every
+# assertion below is unchanged from Phase 0.
+# `catalog_object_id`/`location_id`/`quantity`/`state` are the real
 # field names Square's BatchRetrieveInventoryCounts returns (see
 # spec/fixtures/square/batch_retrieve_inventory_counts.json and that
 # directory's README.md for provenance) — used here for the argument names
-# and shapes, since InventorySync.call takes exactly these keywords.
-RSpec.describe SpreeSquare::InventorySync do
+# and shapes, since InventoryAdapter.call takes exactly these keywords.
+RSpec.describe SpreeSquare::InventoryAdapter do
   let(:fixture) do
     JSON.parse(File.read(File.join(__dir__, '..', '..', 'fixtures', 'square', 'batch_retrieve_inventory_counts.json')))['counts'].first
   end
