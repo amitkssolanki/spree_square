@@ -1,0 +1,131 @@
+{
+  "objects": [
+    {
+      "type": "ITEM",
+      "id": "W62UWFY35CWMYGVWK6TWJDNI",
+      "updated_at": "2016-11-16T22:25:24.878Z",
+      "version": 1479335124878,
+      "is_deleted": false,
+      "present_at_all_locations": true,
+      "item_data": {
+        "name": "Tea",
+        "description": "Hot Leaf Juice",
+        "categories": [{ "id": "BJNQCF2FJ6S6UIDT65ABHLRX", "ordinal": 0 }],
+        "tax_ids": ["L5R47DGBZOOVKCAFIXC56AEN"],
+        "modifier_list_info": [{ "modifier_list_id": "VXPNDSVMRK18Q4YVSC" }],
+        "variations": [
+          {
+            "type": "ITEM_VARIATION",
+            "id": "2TZFAOHWGG7PAK2QEXWYPZSP",
+            "updated_at": "2016-11-16T22:25:24.878Z",
+            "version": 1479335124878,
+            "is_deleted": false,
+            "present_at_all_locations": true,
+            "item_variation_data": {
+              "item_id": "W62UWFY35CWMYGVWK6TWJDNI",
+              "name": "Mug",
+              "ordinal": 0,
+              "pricing_type": "FIXED_PRICING",
+              "price_money": { "amount": 150, "currency": "USD" }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "CATEGORY",
+      "id": "BJNQCF2FJ6S6UIDT65ABHLRX",
+      "updated_at": "2016-11-16T22:25:24.878Z",
+      "version": 1479335124878,
+      "is_deleted": false,
+      "present_at_all_locations": true,
+      "category_data": {
+        "name": "Beverages"
+      }
+    },
+    {
+      "type": "TAX",
+      "id": "L5R47DGBZOOVKCAFIXC56AEN",
+      "updated_at": "2017-02-21T14:50:26.495Z",
+      "version": 1487688626495,
+      "is_deleted": false,
+      "present_at_all_locations": true,
+      "tax_data": {
+        "name": "Sales Tax",
+        "calculation_phase": "TAX_SUBTOTAL_PHASE",
+        "inclusion_type": "ADDITIVE",
+        "percentage": "5.0",
+        "enabled": true
+      }
+    },
+    {
+      "type": "MODIFIER_LIST",
+      "id": "VXPNDSVMRK18Q4YVSC",
+      "updated_at": "2016-11-16T22:25:24.878Z",
+      "version": 1479335124878,
+      "is_deleted": false,
+      "present_at_all_locations": true,
+      "modifier_list_data": {
+        "name": "Milk options",
+        "selection_type": "SINGLE",
+        "modifiers": [
+          {
+            "type": "MODIFIER",
+            "id": "MOD_OAT_MILK",
+            "updated_at": "2016-11-16T22:25:24.878Z",
+            "version": 1479335124878,
+            "is_deleted": false,
+            "present_at_all_locations": true,
+            "modifier_data": {
+              "name": "Oat milk",
+              "price_money": { "amount": 75, "currency": "USD" },
+              "ordinal": 0
+            }
+          },
+          {
+            "type": "MODIFIER",
+            "id": "MOD_WHOLE_MILK",
+            "updated_at": "2016-11-16T22:25:24.878Z",
+            "version": 1479335124878,
+            "is_deleted": false,
+            "present_at_all_locations": true,
+            "modifier_data": {
+              "name": "Whole milk",
+              "price_money": { "amount": 0, "currency": "USD" },
+              "ordinal": 1
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "related_objects": [
+    {
+      "type": "CATEGORY",
+      "id": "BJNQCF2FJ6S6UIDT65ABHLRX",
+      "updated_at": "2016-11-16T22:25:24.878Z",
+      "version": 1479335124878,
+      "is_deleted": false,
+      "present_at_all_locations": true,
+      "category_data": {
+        "name": "Beverages"
+      }
+    },
+    {
+      "type": "TAX",
+      "id": "L5R47DGBZOOVKCAFIXC56AEN",
+      "updated_at": "2017-02-21T14:50:26.495Z",
+      "version": 1487688626495,
+      "is_deleted": false,
+      "present_at_all_locations": true,
+      "tax_data": {
+        "name": "Sales Tax",
+        "calculation_phase": "TAX_SUBTOTAL_PHASE",
+        "inclusion_type": "ADDITIVE",
+        "percentage": "5.0",
+        "enabled": true
+      }
+    }
+  ],
+  "cursor": null
+}

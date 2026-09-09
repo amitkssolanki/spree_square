@@ -72,7 +72,18 @@ module SpreeSquare
     private
 
     def resolve_token
-      return fetch(:access_token, env_key: 'SQUARE_ACCESS_TOKEN') unless @credential
+      unless @credential
+        # The ENV fallback is a dev/sandbox convenience (see the class
+        # comment above) — Square's own terms forbid a partner app using a
+        # personal access token on behalf of sellers, which is exactly what
+        # this path would be doing against a real merchant. Refuse it in
+        # production rather than let a missing/late OAuth connection (or a
+        # rake task like setup_demo_tax that forces credential: nil) quietly
+        # run real traffic through a shared token.
+        return nil if Rails.env.production?
+
+        return fetch(:access_token, env_key: 'SQUARE_ACCESS_TOKEN')
+      end
 
       refresh_if_needed!
       @credential.access_token

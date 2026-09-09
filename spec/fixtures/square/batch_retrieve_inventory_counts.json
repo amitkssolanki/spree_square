@@ -1,0 +1,13 @@
+{
+  "errors": [],
+  "counts": [
+    {
+      "catalog_object_id": "W62UWFY35CWMYGVWK6TWJDNI",
+      "catalog_object_type": "ITEM_VARIATION",
+      "state": "IN_STOCK",
+      "location_id": "59TNP9SA8VGDA",
+      "quantity": "79",
+      "calculated_at": "2016-11-16T22:28:01.223Z"
+    }
+  ]
+}

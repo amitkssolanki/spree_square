@@ -71,6 +71,31 @@ RSpec.describe SpreeSquare::Client do
 
       expect { described_class.for_store(store) }.to raise_error(described_class::MissingCredentialsError)
     end
+
+    context 'in production' do
+      around do |example|
+        original = Rails.env
+        Rails.env = 'production'
+        example.run
+        Rails.env = original
+      end
+
+      # Square's terms forbid a partner app using a personal access token on
+      # behalf of a seller — the ENV fallback is a dev/sandbox convenience
+      # only, so a store with no connected credential must not silently run
+      # real production traffic through it.
+      it 'refuses the SQUARE_ACCESS_TOKEN fallback even though it is set' do
+        expect { described_class.for_store(store) }.to raise_error(described_class::MissingCredentialsError)
+      end
+
+      it 'still uses a connected credential normally' do
+        create(:square_credential, store: store, access_token: 'stored-token', expires_at: 20.days.from_now)
+
+        client = described_class.for_store(store)
+
+        expect(client.send(:resolve_token)).to eq('stored-token')
+      end
+    end
   end
 
   describe '.instance' do
