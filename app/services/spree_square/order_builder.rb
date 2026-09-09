@@ -129,9 +129,12 @@ module SpreeSquare
       }.compact
     end
 
+    # SpreeSquare::LineItemModifier moved to SpreePos:: in Phase 2 step 12a
+    # (rename migration 20260910000007); `square_modifier_id` was renamed to
+    # `external_modifier_id` by that same migration.
     def build_modifier(modifier, currency)
       {
-        catalog_object_id: modifier.square_modifier_id,
+        catalog_object_id: modifier.external_modifier_id,
         name: modifier.name_snapshot,
         base_price_money: { amount: modifier.price_cents_snapshot, currency: currency }
       }

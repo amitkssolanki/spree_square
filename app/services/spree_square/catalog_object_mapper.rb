@@ -42,14 +42,21 @@ module SpreeSquare
 
     # A Square MODIFIER_LIST embeds its full MODIFIER objects inline (same
     # pattern as ITEM#variations) — no follow-up API call needed.
+    #
+    # square_modifier_list_id/square_modifier_id/square_version were renamed
+    # to external_id/external_id/external_version by the Phase 2 step 12a
+    # rename migration (20260910000007) — repointed here so this still-live
+    # code path (called for real by CatalogImporter#call, not just exercised
+    # through a mock) keeps working, not just its mocked characterization
+    # spec.
     def map_modifier_list(square_object)
       data = square_object.modifier_list_data
-      list = SpreeSquare::ModifierList.find_or_initialize_by(square_modifier_list_id: square_object.id)
+      list = SpreeSquare::ModifierList.find_or_initialize_by(external_id: square_object.id)
       list.name = data.name.presence || 'Options'
       list.selection_type = data.selection_type.presence || SpreeSquare::ModifierList::SINGLE
       list.min_selected_modifiers = data.min_selected_modifiers
       list.max_selected_modifiers = data.max_selected_modifiers
-      list.square_version = square_object.version
+      list.external_version = square_object.version
       list.save!
 
       Array(data.modifiers).each { |modifier| map_modifier(modifier, list) }
@@ -58,11 +65,11 @@ module SpreeSquare
 
     def map_modifier(square_object, modifier_list)
       data = square_object.modifier_data
-      modifier = SpreeSquare::Modifier.find_or_initialize_by(square_modifier_id: square_object.id)
+      modifier = SpreeSquare::Modifier.find_or_initialize_by(external_id: square_object.id)
       modifier.modifier_list = modifier_list
       modifier.name = data.name.presence || 'Option'
       modifier.price_cents = data.price_money&.amount || 0
-      modifier.square_version = square_object.version
+      modifier.external_version = square_object.version
       modifier.save!
       modifier
     end

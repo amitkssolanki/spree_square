@@ -70,7 +70,7 @@ RSpec.describe SpreeSquare::OrderBuilder do
     before do
       SpreeSquare::LineItemModifier.create!(
         line_item: line_item,
-        square_modifier_id: 'sq_mod_1',
+        external_modifier_id: 'sq_mod_1',
         name_snapshot: 'Extra cheese',
         price_cents_snapshot: 150
       )
