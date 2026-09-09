@@ -44,6 +44,14 @@ Gem::Specification.new do |s|
   s.add_dependency 'spree', spree_version
   s.add_dependency 'spree_admin', spree_version
 
+  # Phase 2 (sequence step 12): the modifier models/decorators/cart
+  # services/serializers now live in spree_pos; the classes that remain
+  # here are thin compatibility shims (see app/models/spree_square/
+  # modifier_list.rb and friends) that subclass SpreePos:: directly, so
+  # this gem needs SpreePos:: loaded at runtime. No version pin -- spree_pos
+  # isn't published to RubyGems yet (path dependency only, see Q12).
+  s.add_dependency 'spree_pos'
+
   # Square's official Ruby SDK. Current major (Fern-generated) uses
   # Square::Client.new(token:) / square.orders.create(...) — NOT the legacy
   # client.orders_api.create_order shape most tutorials show (that's the

@@ -13,6 +13,11 @@ spree_opts = if ENV['SPREE_PATH']
 gem 'spree', spree_opts
 gem 'spree_admin', spree_opts
 
+# spree_pos is a sibling gem, not yet published (see gemspec's add_dependency
+# comment) -- resolve it as a local path, same convention spree_host's own
+# Gemfile uses, so this gem's own spec suite (spec/dummy) can load SpreePos::.
+gem 'spree_pos', path: ENV['SPREE_POS_PATH'] || '../spree_pos'
+
 gem 'spree_dev_tools', '>= 0.6.0.rc1'
 
 if ENV['DB'] == 'mysql'
