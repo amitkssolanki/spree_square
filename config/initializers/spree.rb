@@ -11,8 +11,11 @@ Spree::PermittedAttributes.line_item_attributes << :square_modifier_ids
 # initializer of its own yet; that consolidation is a later phase step),
 # pointing at SpreePos:: instead of SpreeSquare::.
 
-Spree::Api::Dependencies.product_serializer = 'SpreeSquare::ProductSerializer'
-Spree::Api::Dependencies.line_item_serializer = 'SpreeSquare::LineItemSerializer'
+# Phase 2 (sequence step 12d): both serializers moved to spree_pos (carrying
+# the Spree::Category taxonomy fix verbatim) -- their Spree::Api::Dependencies
+# registration now lives in spree_host's own config/initializers/spree.rb
+# alongside the new :pos_modifier_ids PermittedAttributes entry, for the
+# same reason as the step 12c dependencies above.
 
 # Uncomment lines below to add your own custom business logic
 # such as promotions, shipping methods, etc.
