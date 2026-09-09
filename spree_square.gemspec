@@ -44,6 +44,14 @@ Gem::Specification.new do |s|
   s.add_dependency 'spree', spree_version
   s.add_dependency 'spree_admin', spree_version
 
+  # Provider-neutral multi-POS/multi-location core (Phase 2, step 14 of the
+  # multi-POS/multi-location plan) — SpreePos::CatalogSync now owns the
+  # tax/product/variant/category mapping logic this gem's
+  # CatalogObjectMapper/CatalogAdapter delegate into. Unreleased/local-path
+  # for now (see this repo's own Gemfile) — do not tag or publish against
+  # this dependency yet.
+  s.add_dependency 'spree_pos', '>= 0.1.0'
+
   # Square's official Ruby SDK. Current major (Fern-generated) uses
   # Square::Client.new(token:) / square.orders.create(...) — NOT the legacy
   # client.orders_api.create_order shape most tutorials show (that's the

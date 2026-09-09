@@ -13,6 +13,13 @@ spree_opts = if ENV['SPREE_PATH']
 gem 'spree', spree_opts
 gem 'spree_admin', spree_opts
 
+# Local path dependency, like spree_host's own Gemfile — spree_pos is
+# unreleased (Phase 1/2 of the multi-POS/multi-location plan). Mirrors
+# spree_host's SPREE_POS_PATH-less convention: both repos are checked out as
+# siblings under the same parent directory.
+spree_pos_opts = ENV['SPREE_POS_PATH'] ? { path: ENV['SPREE_POS_PATH'] } : { path: '../spree_pos' }
+gem 'spree_pos', spree_pos_opts
+
 gem 'spree_dev_tools', '>= 0.6.0.rc1'
 
 if ENV['DB'] == 'mysql'

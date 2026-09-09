@@ -161,7 +161,7 @@ module SpreeSquare
     # rate has none) simply gets no applied_taxes, same as today.
     #
     # Filters to TaxMapping#enabled — a disabled Square tax is soft-deleted
-    # on the Spree::TaxRate side (see CatalogObjectMapper#sync_enabled_state!,
+    # on the Spree::TaxRate side (see SpreePos::CatalogSync#sync_enabled_state!,
     # which destroys/restores the *rate*, not this TaxCategoryMapping/
     # TaxMapping join), so Spree's own Spree::TaxRate.adjust already excludes
     # it via that paranoid scope. Without this filter, a disabled tax would
@@ -169,14 +169,18 @@ module SpreeSquare
     # total_money) even though the customer was never actually charged it by
     # Spree — inflating the EXTERNAL payment OrderPusher records above what
     # Spree collected. Found in review, before this ever reached production.
+    #
+    # TaxCategoryMapping/TaxMapping moved to SpreePos:: in Phase 2 step 13a
+    # (rename migration 20260910000008); `square_tax_id` was renamed to
+    # `external_id` by that same migration.
     def resolve_square_tax_ids_for_category(tax_category)
       return [] if tax_category.nil?
 
       @tax_ids_by_category_id[tax_category.id] ||=
-        SpreeSquare::TaxCategoryMapping
+        SpreePos::TaxCategoryMapping
         .where(tax_category: tax_category)
         .includes(:tax_mapping)
-        .filter_map { |mapping| mapping.tax_mapping&.square_tax_id if mapping.tax_mapping&.enabled }
+        .filter_map { |mapping| mapping.tax_mapping&.external_id if mapping.tax_mapping&.enabled }
         .uniq
     end
   end

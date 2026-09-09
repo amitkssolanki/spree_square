@@ -18,10 +18,12 @@ module Spree
       # documented extension point for narrowing the base query before
       # ransack/pagination run. Scoped here so this page only ever shows
       # rates this extension actually created (via
-      # SpreeSquare::TaxCategoryMapping), not any rate a store admin might
-      # separately hand-create in the regular Spree tax-rates admin page.
+      # SpreePos::TaxCategoryMapping, moved from SpreeSquare::
+      # TaxCategoryMapping in Phase 2 step 13a), not any rate a store admin
+      # might separately hand-create in the regular Spree tax-rates admin
+      # page.
       def scope
-        Spree::TaxRate.where(id: SpreeSquare::TaxCategoryMapping.select(:tax_rate_id))
+        Spree::TaxRate.where(id: SpreePos::TaxCategoryMapping.select(:tax_rate_id))
       end
     end
   end
