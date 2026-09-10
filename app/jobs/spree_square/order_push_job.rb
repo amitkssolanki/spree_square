@@ -8,8 +8,8 @@ module SpreeSquare
   class OrderPushJob < BaseJob
     retry_on StandardError, wait: :polynomially_longer, attempts: 5 do |job, error|
       order = Spree::Order.find_by(id: job.arguments.first)
-      SpreeSquare::OrderMapping.find_or_initialize_by(order: order).mark_failed!(error) if order
-      SpreeSquare::Alerting.capture(
+      SpreePos::OrderMapping.find_or_initialize_by(order: order).mark_failed!(error) if order
+      SpreePos::Alerting.capture(
         error,
         context: { area: 'order_push', order_number: order&.number }
       )
@@ -17,7 +17,7 @@ module SpreeSquare
 
     def perform(order_id)
       order = Spree::Order.find(order_id)
-      SpreeSquare::OrderPusher.call(order)
+      SpreePos::OrderPush.call(order, adapter: SpreeSquare::OrderAdapter.new, order_idempotency_key: true)
     end
   end
 end
