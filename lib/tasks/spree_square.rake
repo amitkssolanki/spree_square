@@ -31,9 +31,12 @@ namespace :spree_square do
     category_word = result.categories_count == 1 ? 'category' : 'categories'
     puts "Imported #{result.categories_count} #{category_word} and #{result.items_count} item(s)."
     puts '---'
-    SpreeSquare::CatalogMapping.where(square_object_type: SpreeSquare::CatalogMapping::ITEM)
-                                .includes(:product).find_each do |mapping|
-      product = mapping.product
+    # B2: reads SpreePos::ExternalRef, not the legacy CatalogMapping this
+    # used to list. Nothing writes that table any more, so after the cutover
+    # this loop would have printed nothing at all following a perfectly
+    # successful import, which reads as "the import did nothing".
+    SpreePos::ExternalRef.of_type(SpreePos::ExternalRef::RESOURCE_ITEM).find_each do |ref|
+      product = ref.product
       next unless product
 
       puts "#{product.slug.ljust(40)} #{product.display_price}"

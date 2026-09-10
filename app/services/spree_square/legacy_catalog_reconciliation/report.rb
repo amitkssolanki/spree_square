@@ -46,6 +46,43 @@ module SpreeSquare
         }
       end
 
+      # The explicit MUTATION PLAN: exactly what a mutation would write, in
+      # the order it would write it, before anything is written.
+      #
+      # Separate from `to_s` on purpose. `to_s` answers "what is the state of
+      # the data"; this answers "what is about to happen to it", which is the
+      # question an operator has to sign off before a production cutover.
+      def mutation_plan
+        by_kind = convertible.group_by { |f| [f.resource_type, f.classification] }
+
+        lines = ['MUTATION PLAN', '=' * 70]
+        lines << "Would INSERT #{convertible.size} SpreePos::ExternalRef row(s):"
+        by_kind.sort_by { |(type, classification), _| [type.to_s, classification.to_s] }.each do |(type, classification), rows|
+          lines << format('  %-10s %-32s %5d', type, classification, rows.size)
+        end
+
+        lines << ''
+        lines << 'Would UPDATE   0 rows (a ref that already exists is never touched).'
+        lines << 'Would DELETE   0 rows.'
+        lines << 'Would TOUCH    0 legacy rows (spree_square_catalog_mappings / _taxon_mappings are read-only here).'
+
+        lines << ''
+        lines << "Per connection:"
+        convertible.group_by { |f| [f.pos_connection_id, f.pos_connection_merchant_id] }
+                   .sort_by { |(id, _), _| id.to_i }
+                   .each { |(id, merchant), rows| lines << "  connection #{id} (#{merchant}): #{rows.size} row(s)" }
+
+        lines << ''
+        if unresolved.any?
+          lines << "WOULD REFUSE: #{unresolved.size} row(s) still need human resolution."
+          lines << '  Pass allow_unresolved: true only after reviewing each one.'
+        else
+          lines << 'No unresolved rows. The mutation would proceed.'
+        end
+
+        lines.join("\n")
+      end
+
       def to_s
         lines = ["Legacy catalog reconciliation: #{total} legacy mapping row(s)"]
         Finding::ALL.each do |classification|

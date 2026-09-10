@@ -1,5 +1,12 @@
 # The production-shaped B2 rehearsal (brief section 10).
 #
+# Every mutation below passes `allow_unresolved: true`. That is the point of
+# the fixture: it deliberately contains collisions, an ambiguous row and an
+# unattributable one, and the migrator now REFUSES by default when any row
+# still needs human resolution. These examples are the reviewed-and-proceed
+# case, which is exactly how a real cutover runs once an operator has looked
+# at each unresolved row and decided to migrate the rest.
+#
 # This is deliberately ONE long fixture rather than a set of small ones: the
 # thing being validated is not any single classification (those have their
 # own spec next door) but that the whole cutover behaves correctly on a
@@ -224,7 +231,7 @@ RSpec.describe 'SpreeSquare::LegacyCatalogReconciliation on a production-shaped 
   end
 
   describe 'step 2: the mutation' do
-    subject!(:result) { SpreeSquare::LegacyCatalogReconciliation.migrate! }
+    subject!(:result) { SpreeSquare::LegacyCatalogReconciliation.migrate!(allow_unresolved: true) }
 
     it 'creates one ExternalRef per convertible row and nothing else' do
       expect(result.applied.size).to eq(57)
@@ -263,7 +270,7 @@ RSpec.describe 'SpreeSquare::LegacyCatalogReconciliation on a production-shaped 
   end
 
   describe 'steps 3 and 4: the second dry run and the second mutation' do
-    before { SpreeSquare::LegacyCatalogReconciliation.migrate! }
+    before { SpreeSquare::LegacyCatalogReconciliation.migrate!(allow_unresolved: true) }
 
     it 'reports every migrated row as unchanged and nothing as convertible' do
       report = SpreeSquare::LegacyCatalogReconciliation.analyze
@@ -288,16 +295,16 @@ RSpec.describe 'SpreeSquare::LegacyCatalogReconciliation on a production-shaped 
     end
 
     it 'creates no duplicates on a second mutation' do
-      expect { SpreeSquare::LegacyCatalogReconciliation.migrate! }
+      expect { SpreeSquare::LegacyCatalogReconciliation.migrate!(allow_unresolved: true) }
         .not_to change(SpreePos::ExternalRef, :count).from(pre_existing_ref_count + 57)
     end
 
     it 'applies nothing on a second mutation' do
-      expect(SpreeSquare::LegacyCatalogReconciliation.migrate!.applied).to be_empty
+      expect(SpreeSquare::LegacyCatalogReconciliation.migrate!(allow_unresolved: true).applied).to be_empty
     end
 
     it 'still leaves every legacy row intact' do
-      SpreeSquare::LegacyCatalogReconciliation.migrate!
+      SpreeSquare::LegacyCatalogReconciliation.migrate!(allow_unresolved: true)
 
       expect(SpreeSquare::CatalogMapping.count).to eq(29)
       expect(SpreeSquare::TaxonMapping.count).to eq(37)

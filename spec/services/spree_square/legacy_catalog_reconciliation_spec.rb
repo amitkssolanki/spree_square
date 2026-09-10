@@ -307,6 +307,54 @@ RSpec.describe SpreeSquare::LegacyCatalogReconciliation do
     end
   end
 
+  # The explicit plan an operator signs off before a production cutover.
+  # Distinct from the state report: this says what is about to HAPPEN.
+  describe 'the mutation plan' do
+    it 'states exactly what would be inserted, per resource type' do
+      legacy_item('sq_item_1', product)
+      legacy_category('sq_cat_1', category('Pizza'))
+
+      plan = described_class.analyze.mutation_plan
+
+      expect(plan).to include('MUTATION PLAN')
+      expect(plan).to include('Would INSERT 2 SpreePos::ExternalRef row(s)')
+      expect(plan).to match(/item\s+convertible\s+1/)
+      expect(plan).to match(/category\s+convertible\s+1/)
+    end
+
+    # The three zeros are the whole safety claim in one place: this migration
+    # only ever inserts, and never touches the legacy tables it reads.
+    it 'states plainly that it updates nothing, deletes nothing and touches no legacy row' do
+      legacy_item('sq_item_1', product)
+
+      plan = described_class.analyze.mutation_plan
+
+      expect(plan).to include('Would UPDATE   0 rows')
+      expect(plan).to include('Would DELETE   0 rows')
+      expect(plan).to include('Would TOUCH    0 legacy rows')
+    end
+
+    it 'breaks the plan down per connection, so a franchise cutover is reviewable' do
+      legacy_item('sq_item_1', product)
+
+      expect(described_class.analyze.mutation_plan).to match(/connection #{connection.id} \(MERCHANT_MAIN\): 1 row/)
+    end
+
+    it 'warns up front that it would refuse when rows are unresolved' do
+      pizza = product
+      legacy_item('sq_item_old', pizza)
+      legacy_item('sq_item_new', pizza)
+
+      expect(described_class.analyze.mutation_plan).to include('WOULD REFUSE')
+    end
+
+    it 'says it would proceed when nothing is unresolved' do
+      legacy_item('sq_item_1', product)
+
+      expect(described_class.analyze.mutation_plan).to include('The mutation would proceed')
+    end
+  end
+
   describe 'the mutation' do
     it 'creates an ExternalRef for every convertible row, carrying the legacy version metadata' do
       pizza = product
@@ -341,7 +389,7 @@ RSpec.describe SpreeSquare::LegacyCatalogReconciliation do
       legacy_item('sq_item_old', pizza)
       legacy_item('sq_item_new', pizza)
 
-      described_class.migrate!
+      described_class.migrate!(allow_unresolved: true)
 
       expect(SpreePos::ExternalRef.count).to eq(0)
       expect(described_class.analyze.counts[:item_collision]).to eq(2)
@@ -353,9 +401,54 @@ RSpec.describe SpreeSquare::LegacyCatalogReconciliation do
       legacy_item('sq_item_new', pizza)
       legacy_category('sq_cat_1', category('Pizza'))
 
-      described_class.migrate!
+      described_class.migrate!(allow_unresolved: true)
 
       expect(SpreePos::ExternalRef.pluck(:external_id)).to eq(['sq_cat_1'])
+    end
+
+    # THE REFUSAL GATE. Unresolved rows mean a human has not finished
+    # deciding, and mutating anyway would act on a plan nobody signed off.
+    it 'REFUSES to mutate at all when any row still needs human resolution' do
+      pizza = product
+      legacy_item('sq_item_old', pizza)
+      legacy_item('sq_item_new', pizza)
+
+      expect { described_class.migrate! }
+        .to raise_error(SpreeSquare::LegacyCatalogReconciliation::Migrator::InvariantViolation,
+                        /REFUSING TO MUTATE/)
+    end
+
+    it 'writes nothing at all when it refuses, not even the convertible rows' do
+      pizza = product
+      legacy_item('sq_item_old', pizza)
+      legacy_item('sq_item_new', pizza)
+      legacy_category('sq_cat_1', category('Pizza'))
+
+      expect { described_class.migrate! rescue nil }.not_to change(SpreePos::ExternalRef, :count).from(0)
+    end
+
+    it 'names the classifications blocking it, so the operator knows what to look at' do
+      pizza = product
+      legacy_item('sq_item_old', pizza)
+      legacy_item('sq_item_new', pizza)
+
+      expect { described_class.migrate! }.to raise_error(/item_collision: 2/)
+    end
+
+    it 'proceeds when explicitly told the unresolved rows have been reviewed' do
+      pizza = product
+      legacy_item('sq_item_old', pizza)
+      legacy_item('sq_item_new', pizza)
+      legacy_category('sq_cat_1', category('Pizza'))
+
+      expect { described_class.migrate!(allow_unresolved: true) }
+        .to change(SpreePos::ExternalRef, :count).from(0).to(1)
+    end
+
+    it 'needs no override when nothing is unresolved' do
+      legacy_item('sq_item_1', product)
+
+      expect { described_class.migrate! }.to change(SpreePos::ExternalRef, :count).from(0).to(1)
     end
 
     it 'never deletes or edits a legacy mapping row' do
@@ -376,7 +469,7 @@ RSpec.describe SpreeSquare::LegacyCatalogReconciliation do
       ref = SpreePos::ExternalRef.create!(pos_connection: connection, resource_type: 'item',
                                           external_id: 'sq_item_1', spree_type: 'Spree::Product', spree_id: other.id)
 
-      described_class.migrate!
+      described_class.migrate!(allow_unresolved: true)
 
       expect(ref.reload.spree_id).to eq(other.id)
     end

@@ -33,8 +33,12 @@ module SpreeSquare
 
       # Mutating. Must be invoked explicitly; nothing calls it on a
       # schedule, from a webhook, or from catalog sync.
-      def migrate!(connection: nil)
-        Migrator.new(connection: connection).call
+      #
+      # REFUSES rather than mutating when a hard invariant fails, including
+      # the default refusal on any row still needing human resolution.
+      # `allow_unresolved:` lifts only that one check, and only on purpose.
+      def migrate!(connection: nil, allow_unresolved: false)
+        Migrator.new(connection: connection, allow_unresolved: allow_unresolved).call
       end
     end
   end

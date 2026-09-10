@@ -12,6 +12,11 @@ namespace :spree_square do
     task dry_run: :environment do
       report = SpreeSquare::LegacyCatalogReconciliation.analyze(connection: b2_connection)
       puts report
+      puts
+      # The explicit plan an operator signs off before a production cutover:
+      # what would be written, per resource type and per connection, and what
+      # would deliberately not be touched.
+      puts report.mutation_plan
 
       # Non-zero on anything a human still has to decide, so a cutover
       # script cannot proceed past an unresolved conflict by accident.
@@ -21,8 +26,15 @@ namespace :spree_square do
     end
 
     desc 'MUTATES. Create SpreePos::ExternalRef rows for every convertible legacy mapping. Idempotent.'
+    # ALLOW_UNRESOLVED=1 migrates the convertible rows while leaving
+    # unresolved ones alone. Deliberately an environment variable that has to
+    # be typed: the default refuses, because unresolved rows mean a human has
+    # not finished deciding.
     task migrate: :environment do
-      report = SpreeSquare::LegacyCatalogReconciliation.migrate!(connection: b2_connection)
+      report = SpreeSquare::LegacyCatalogReconciliation.migrate!(
+        connection: b2_connection,
+        allow_unresolved: ENV['ALLOW_UNRESOLVED'].present?
+      )
       puts report
       puts "\nApplied #{report.applied.size} ExternalRef row(s)."
       puts "Left unresolved: #{report.unresolved.size} row(s). Nothing was overwritten and no legacy row was touched."
