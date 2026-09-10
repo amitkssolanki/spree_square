@@ -254,6 +254,133 @@ RSpec.describe SpreeSquare::LegacyCatalogReconciliation do
     end
   end
 
+  # THE REAL PRODUCTION SHAPE. Production holds 402 catalog mappings and
+  # 156 of EACH type point at a SOFT-DELETED Spree record, because retiring
+  # a menu item in Square soft-deletes the Spree product and its variants
+  # (both acts_as_paranoid). A bare find_by misread every one of them as a
+  # missing target, and the refusal gate would then have refused the whole
+  # cutover on healthy rows. The earlier production-shaped fixture had no
+  # soft-deleted records, which is exactly why it never caught this.
+  describe 'soft-deleted Spree targets (the real production shape)' do
+    def soft_delete(record) = record.update_column(:deleted_at, Time.current)
+
+    it 'does NOT classify a mapping to a soft-deleted product as a missing target' do
+      pizza = product('Retired Pizza')
+      legacy_item('sq_item_retired', pizza)
+      soft_delete(pizza)
+
+      expect(classification_of(described_class.analyze, 'sq_item_retired')).to eq(:convertible)
+    end
+
+    it 'does NOT classify a mapping to a soft-deleted variant as a missing target' do
+      variant = create(:variant)
+      legacy_variation('sq_var_retired', variant)
+      soft_delete(variant)
+
+      expect(classification_of(described_class.analyze, 'sq_var_retired')).to eq(:convertible)
+    end
+
+    # When Square retires an item, BOTH the product and its variants are
+    # soft-deleted. Store attribution for the variant then runs through a
+    # soft-deleted product, which works only because Spree declares
+    # `belongs_to :product, -> { with_deleted }` on Variant.
+    it 'still attributes a variant to its store when the variant AND its product are soft-deleted' do
+      variant = create(:variant)
+      legacy_variation('sq_var_retired', variant)
+      soft_delete(variant)
+      soft_delete(variant.product)
+
+      finding = described_class.analyze.findings.find { |f| f.external_id == 'sq_var_retired' }
+
+      expect(finding.classification).to eq(:convertible)
+      expect(finding.pos_connection_id).to eq(connection.id)
+    end
+
+    # What production actually contains: the retired rows were already
+    # absorbed into ExternalRef by Phase 3.
+    it 'classifies a soft-deleted target already absorbed by Phase 3 as unchanged, not missing' do
+      pizza = product('Retired Pizza')
+      legacy_item('sq_item_retired', pizza, version: 4)
+      soft_delete(pizza)
+      SpreePos::ExternalRef.create!(pos_connection: connection, resource_type: 'item',
+                                    external_id: 'sq_item_retired', spree_type: 'Spree::Product',
+                                    spree_id: pizza.id, external_version: 4)
+
+      expect(classification_of(described_class.analyze, 'sq_item_retired')).to eq(:unchanged)
+    end
+
+    it 'migrates a ref for a soft-deleted target, preserving its identity if the item is ever restored' do
+      pizza = product('Retired Pizza')
+      legacy_item('sq_item_retired', pizza)
+      soft_delete(pizza)
+
+      described_class.migrate!
+
+      expect(SpreePos::ExternalRef.find_by(external_id: 'sq_item_retired').spree_id).to eq(pizza.id)
+    end
+
+    it 'does not let soft-deleted rows trip the refusal gate' do
+      live = product('Live Pizza')
+      retired = product('Retired Pizza')
+      legacy_item('sq_item_live', live)
+      legacy_item('sq_item_retired', retired)
+      soft_delete(retired)
+
+      expect(described_class.analyze.unresolved).to be_empty
+      expect { described_class.migrate! }.to change(SpreePos::ExternalRef, :count).by(2)
+    end
+  end
+
+  # Both directions are real, and they mean opposite things.
+  describe 'the already_represented message is direction-aware' do
+    def ref_at(version, product)
+      SpreePos::ExternalRef.create!(pos_connection: connection, resource_type: 'item', external_id: 'sq_item_1',
+                                    spree_type: 'Spree::Product', spree_id: product.id, external_version: version)
+    end
+
+    # The production reality before cutover: the deployed code still writes
+    # the legacy table, so the ExternalRef is the frozen Phase 3 snapshot.
+    it 'explains a NEWER legacy row as the expected pre-cutover production state' do
+      pizza = product
+      legacy_item('sq_item_1', pizza, version: 9)
+      ref_at(4, pizza)
+
+      detail = described_class.analyze.of(:already_represented).sole.detail
+
+      expect(detail).to include('legacy row is NEWER')
+      expect(detail).to include('Phase 3 snapshot')
+    end
+
+    it 'explains a NEWER ExternalRef as a real post-cutover sync' do
+      pizza = product
+      legacy_item('sq_item_1', pizza, version: 3)
+      ref_at(9, pizza)
+
+      expect(described_class.analyze.of(:already_represented).sole.detail).to include('ExternalRef is NEWER')
+    end
+
+    it 'says ordering cannot be established when a version is absent' do
+      pizza = product
+      legacy_item('sq_item_1', pizza, version: 3)
+      ref_at(nil, pizza)
+
+      expect(described_class.analyze.of(:already_represented).sole.detail)
+        .to include('cannot be established')
+    end
+
+    # The message changed; the behaviour must not. This migration never
+    # updates a row, in either direction.
+    it 'still never updates the ref, even when the legacy row is newer' do
+      pizza = product
+      legacy_item('sq_item_1', pizza, version: 9)
+      ref = ref_at(4, pizza)
+
+      described_class.migrate!
+
+      expect(ref.reload.external_version).to eq(4)
+    end
+  end
+
   describe 'tenant isolation' do
     let(:other_store) { create(:store, name: 'Second Franchisee', url: 'second.example.com', code: 'second') }
     let!(:other_connection) do

@@ -132,10 +132,29 @@ module SpreeSquare
         end
       end
 
+      # PARANOIA-AWARE, matching the Phase 3 absorb migration exactly
+      # (20260911010000 uses Spree::Product.with_deleted and
+      # Spree::Variant.with_deleted for this same reason).
+      #
+      # Both Spree::Product and Spree::Variant are acts_as_paranoid, so a
+      # bare find_by returns nil for a SOFT-DELETED record. That is not a
+      # theoretical shape: production holds 402 catalog mappings and 156 of
+      # EACH type point at a soft-deleted record (retired menu items). A bare
+      # lookup misclassified all ~312 of them as missing_spree_target, BEFORE
+      # ever checking whether Phase 3 had already absorbed them, and the
+      # refusal gate would then have refused the whole cutover on rows that
+      # are completely healthy.
+      #
+      # A soft-deleted record is a real row, so it is classified on its
+      # merits. Only a genuinely hard-deleted (absent) record is missing.
+      # Spree::Taxon / Spree::Category are not paranoid, so respond_to? leaves
+      # them on the ordinary lookup.
       def spree_record(row)
         return nil if row.spree_type.blank? || row.spree_id.blank?
 
-        row.spree_type.constantize.find_by(id: row.spree_id)
+        klass = row.spree_type.constantize
+        scope = klass.respond_to?(:with_deleted) ? klass.with_deleted : klass
+        scope.find_by(id: row.spree_id)
       end
 
       # ------------------------------------------------------------------
@@ -211,10 +230,41 @@ module SpreeSquare
 
         return finalize(finding, :unchanged, nil) if existing.external_version == row.external_version
 
-        finalize(finding, :already_represented,
-                 "already migrated, but the live ExternalRef records external version " \
-                 "#{existing.external_version.inspect} where the legacy row records #{row.external_version.inspect}; " \
-                 'the live value is left alone because it came from a real sync')
+        finalize(finding, :already_represented, already_represented_detail(existing, row))
+      end
+
+      # Direction-aware, because the two directions mean opposite things and
+      # the old single message described only one of them.
+      #
+      # In PRODUCTION TODAY the legacy row is usually the newer one: the
+      # deployed code still writes the legacy table, so the ExternalRef is
+      # the frozen Phase 3 snapshot. The old wording ("the live ExternalRef
+      # ... came from a real sync") said the exact opposite, which would have
+      # misled the operator reading the dry run at cutover.
+      #
+      # Either way the row is LEFT ALONE: this migration never updates a
+      # row. A stale ref self-heals, because an incoming delivery carries a
+      # version higher than the stale one and is therefore never rejected as
+      # stale.
+      def already_represented_detail(existing, row)
+        ref_version = existing.external_version
+        legacy_version = row.external_version
+
+        if ref_version.present? && legacy_version.present? && legacy_version > ref_version
+          "already migrated, and the legacy row is NEWER (version #{legacy_version}) than the ExternalRef " \
+            "(version #{ref_version}). This is the expected state in production before cutover: the deployed " \
+            'code still writes the legacy table, so the ExternalRef is the frozen Phase 3 snapshot. Left alone, ' \
+            'because this migration never updates a row; the first catalog sync after cutover refreshes it, and ' \
+            'a full catalog import is step 8 of the cutover procedure.'
+        elsif ref_version.present? && legacy_version.present?
+          "already migrated, and the ExternalRef is NEWER (version #{ref_version}) than the legacy row " \
+            "(version #{legacy_version}), so it was written by a real sync after cutover. Left alone: the live " \
+            'value is authoritative.'
+        else
+          "already migrated, but versions differ (ExternalRef: #{ref_version.inspect}, legacy: " \
+            "#{legacy_version.inspect}) and at least one is absent, so which is newer cannot be established. " \
+            'Left alone; the next catalog sync reconciles it.'
+        end
       end
 
       # ------------------------------------------------------------------
