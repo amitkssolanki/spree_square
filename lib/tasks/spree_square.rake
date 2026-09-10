@@ -75,25 +75,11 @@ namespace :spree_square do
     puts 'Set SQUARE_WEBHOOK_SIGNATURE_KEY in .env to the value above, then recreate the web container.'
   end
 
-  desc "Phase 8 M1: ensure a state-scoped tax Zone exists for the store's own StockLocation state"
+  desc 'DEPRECATED (Phase 3, step 22) -- use spree_pos:ensure_tax_zone instead, which handles ' \
+       "every StockLocation, not just the (forbidden-to-single-out) default one. Kept as a shim " \
+       'so existing muscle memory / deploy scripts calling this name keep working.'
   task ensure_tax_zone: :environment do
-    stock_location = Spree::StockLocation.find_by(default: true)
-    abort 'No default Spree::StockLocation found.' if stock_location.blank?
-
-    state = stock_location.state
-    abort "StockLocation ##{stock_location.id} (#{stock_location.name}) has no state set — set one before running this task." if state.blank?
-
-    # Named/keyed off the state itself (not hardcoded "OH") and re-derived
-    # from StockLocation on every run — if that address ever moves to a
-    # different state, re-running this task points the zone at the new one
-    # instead of silently leaving a stale zone behind.
-    zone = Spree::Zone.find_or_initialize_by(name: "#{state.abbr} Sales Tax")
-    zone.kind = 'state'
-    zone.description = "Sales tax zone for #{state.name} — tracks Spree::StockLocation's own state; see spree_square:ensure_tax_zone." if zone.has_attribute?(:description)
-    zone.save!
-    zone.state_ids = [state.id]
-
-    puts "Zone ##{zone.id} '#{zone.name}' now contains exactly: #{zone.states.pluck(:abbr).join(', ')}"
+    Rake::Task['spree_pos:ensure_tax_zone'].invoke
   end
 
   desc 'Phase 8 M4: create a real 8% Sales Tax object in Square Sandbox, attach it to every item, and tax delivery fees to match'
