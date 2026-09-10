@@ -1,4 +1,4 @@
-RSpec.describe SpreeSquare::OrderBuilder do
+RSpec.describe SpreeSquare::OrderAdapter do
   # Creating a line item on an already-"complete" order (a shortcut real
   # checkout never takes) fires Spree's after_save :update_inventory, which
   # expects a fully-formed checkout-created shipment/inventory-unit graph
@@ -38,7 +38,7 @@ RSpec.describe SpreeSquare::OrderBuilder do
 
   # .reload: `order` may already have cached an empty `shipments`
   # association from before the `let!(:shipment)` created one.
-  subject(:payload) { described_class.call(order.reload) }
+  subject(:payload) { described_class.new.build_payload(order.reload) }
 
   it 'targets the Square location mapped from the order\'s stock location' do
     expect(payload[:location_id]).to eq('sq_loc_1')

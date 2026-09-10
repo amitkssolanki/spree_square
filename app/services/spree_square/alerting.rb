@@ -1,17 +1,13 @@
 module SpreeSquare
-  # One place for "this needs a human" — used when a job exhausts its
-  # retries. Reports to Sentry (already in this app's stack) when available,
-  # always logs at error level regardless so nothing depends on Sentry being
-  # configured to at least be visible in the server log.
+  # Thin delegating wrapper -- the real, provider-neutral implementation
+  # moved to SpreePos::Alerting (Phase 2D, step 16b; see that class's own
+  # comment). Kept here, rather than deleted, so the four job files not in
+  # this batch's scope (order_webhook_job.rb, catalog_webhook_job.rb,
+  # inventory_webhook_job.rb, reconciliation_job.rb) keep calling
+  # `SpreeSquare::Alerting.capture` unchanged.
   class Alerting
     def self.capture(error, context: {})
-      context = { source: 'spree_square' }.merge(context.is_a?(String) ? { area: context } : context)
-
-      Rails.logger.error("[SpreeSquare] #{context[:area] || 'error'}: #{error.class}: #{error.message}")
-
-      return unless defined?(Sentry)
-
-      Sentry.capture_exception(error, extra: context)
+      SpreePos::Alerting.capture(error, context: context, source: 'spree_square')
     end
   end
 end

@@ -1,16 +1,24 @@
 require 'json'
 
-# Characterization spec, written in Phase 0 before OrderPusher moves anywhere
+# Characterization spec, written in Phase 0 before OrderPusher moved anywhere
 # (Phase 2, sequence step 16a/16b — see the plan). Values below come from the
 # real Square response shapes recorded in spec/fixtures/square/create_order.json
 # and create_payment.json (see that directory's README.md for provenance).
 #
-# OrderBuilder already has its own 302-line characterization spec covering
-# payload construction — this spec isolates the two behaviours the plan
-# specifically calls out for OrderPusher: paying exactly Square's own
-# total_money (never a locally recomputed total), and the post-payment
-# re-read that keeps the mapping's status current.
-RSpec.describe SpreeSquare::OrderPusher do
+# OrderAdapter#build_payload already has its own 302-line characterization
+# spec covering payload construction — this spec isolates the two behaviours
+# the plan specifically calls out for the push side: paying exactly Square's
+# own total_money (never a locally recomputed total), and the post-payment
+# re-read that keeps the returned result's status current.
+#
+# Phase 2D, step 16b moved the mapping bookkeeping (find-or-create,
+# push_state, dedup on a second push) off this class entirely and onto
+# SpreePos::OrderPush -- #push now returns a plain SpreePos::Orders::
+# PushResult instead of a SpreeSquare::OrderMapping, so those assertions
+# moved with it to spec/models/spree_pos/order_push_spec.rb in spree_pos.
+# This file keeps only the assertions that are genuinely about what this
+# adapter does with the Square API, unchanged from before.
+RSpec.describe SpreeSquare::OrderAdapter do
   around do |example|
     Spree::LineItem.skip_callback(:save, :after, :update_inventory)
     example.run
@@ -43,9 +51,11 @@ RSpec.describe SpreeSquare::OrderPusher do
   let(:payments_api) { double('payments_api') }
   let(:client) { instance_double(SpreeSquare::Client, orders: orders_api, payments: payments_api) }
 
+  subject(:adapter) { described_class.new }
+
   before do
     allow(SpreeSquare::Client).to receive(:instance).and_return(client)
-    allow(SpreeSquare::OrderBuilder).to receive(:call).with(order).and_return(builder_payload)
+    allow(adapter).to receive(:build_payload).with(order).and_return(builder_payload)
     allow(orders_api).to receive(:create)
       .with(idempotency_key: "spree-order-#{order.number}", order: builder_payload)
       .and_return(double('CreateOrderResponse', order: square_order))
@@ -54,7 +64,7 @@ RSpec.describe SpreeSquare::OrderPusher do
   end
 
   it 'charges exactly the total_money Square computed for the order it just created' do
-    described_class.call(order)
+    adapter.push(order)
 
     expect(payments_api).to have_received(:create).with(
       hash_including(
@@ -66,38 +76,30 @@ RSpec.describe SpreeSquare::OrderPusher do
   end
 
   it 'never recomputes the total from the local Spree order' do
-    # If OrderPusher ever starts deriving the charge from order.total instead
-    # of square_order.total_money, this is the spec that catches it: assert
-    # the two disagree going in, so a regression that quietly switches the
+    # If #push ever starts deriving the charge from order.total instead of
+    # square_order.total_money, this is the spec that catches it: assert the
+    # two disagree going in, so a regression that quietly switches the
     # source can't pass by coincidentally matching.
     expect((order.total.to_f * 100).to_i).not_to eq(order_fixture['total_money']['amount'])
 
-    described_class.call(order)
+    adapter.push(order)
 
     expect(payments_api).to have_received(:create).with(hash_including(amount_money: { amount: 6176, currency: 'USD' }))
   end
 
-  it 'records the mapping from the initial create-order response first' do
-    mapping = described_class.call(order)
+  it 'returns a PushResult built from the initial create-order response' do
+    result = adapter.push(order)
 
-    expect(mapping).to be_a(SpreeSquare::OrderMapping)
-    expect(mapping.square_order_id).to eq(order_fixture['id'])
-    expect(mapping.square_location_id).to eq(order_fixture['location_id'])
+    expect(result).to be_a(SpreePos::Orders::PushResult)
+    expect(result.external_order_id).to eq(order_fixture['id'])
+    expect(result.external_location_id).to eq(order_fixture['location_id'])
   end
 
-  it 're-reads the order after payment so the mapping reflects the post-payment state, not the pre-payment snapshot' do
-    mapping = described_class.call(order)
+  it 're-reads the order after payment so the result reflects the post-payment state, not the pre-payment snapshot' do
+    result = adapter.push(order)
 
-    expect(mapping.last_status).to eq('COMPLETED')
-    expect(mapping.square_version).to eq(order_fixture['version'] + 1)
-    expect(mapping.square_payment_id).to eq(payment_fixture['id'])
-  end
-
-  it 'finds or initializes a single mapping per order rather than creating duplicates on a second push' do
-    first = described_class.call(order)
-    second = described_class.call(order)
-
-    expect(second.id).to eq(first.id)
-    expect(SpreeSquare::OrderMapping.where(order: order).count).to eq(1)
+    expect(result.status).to eq('COMPLETED')
+    expect(result.external_version).to eq(order_fixture['version'] + 1)
+    expect(result.external_payment_id).to eq(payment_fixture['id'])
   end
 end
