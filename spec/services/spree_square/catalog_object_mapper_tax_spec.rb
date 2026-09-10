@@ -4,6 +4,15 @@ RSpec.describe 'SpreeSquare::CatalogObjectMapper tax handling (Phase 8)' do
   let(:state) { create(:state, name: 'Ohio', abbr: 'OH') }
   let!(:default_stock_location) { create(:stock_location, default: true, state: state, country: state.country) }
   let!(:tax_zone) { create(:zone, name: 'OH Sales Tax', kind: 'state').tap { |z| z.members.create!(zoneable: state) } }
+  # Phase 3: SpreePos::CatalogSync#map_tax/#composite_tax_category now
+  # require a resolvable SpreePos::Connection (spree_pos_tax_mappings/
+  # tax_combinations.pos_connection_id are NOT NULL after the tighten
+  # migration) -- not via the `:pos_connection` factory, since spree_square's
+  # rails_helper.rb only registers spree_square's own factories.
+  let!(:pos_connection) do
+    SpreePos::Connection.create!(store: store, provider: 'square', external_merchant_id: 'sq_merchant_1',
+                                  catalog_role: 'source')
+  end
 
   # Mirrors catalog_object_mapper_spec.rb's own `square_object` helper
   # exactly (see its comment for why this is a plain double, not

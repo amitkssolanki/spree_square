@@ -137,6 +137,13 @@ RSpec.describe SpreeSquare::OrderAdapter do
       taxed_product.tax_category
     end
 
+    # Phase 3: SpreePos::CatalogSync#map_tax/#composite_tax_category (via
+    # `tax_category` above) require a resolvable SpreePos::Connection now.
+    let!(:pos_connection) do
+      SpreePos::Connection.create!(store: Spree::Store.first || Spree::Store.default, provider: 'square',
+                                    external_merchant_id: 'sq_merchant_1', catalog_role: 'source')
+    end
+
     before do
       Spree::ShippingCategory.find_or_create_by!(name: 'Default')
       Spree::Channel.find_or_create_by!(code: 'online') { |c| c.name = 'Online Store'; c.store = Spree::Store.default }
@@ -240,6 +247,12 @@ RSpec.describe SpreeSquare::OrderAdapter do
       let!(:tax_zone) { create(:zone, name: 'OH Sales Tax', kind: 'state').tap { |z| z.members.create!(zoneable: state) } }
       let!(:tax_default_stock_location) { create(:stock_location, default: true, state: state, country: state.country) }
       let(:mapper) { SpreeSquare::CatalogObjectMapper.new }
+      # Phase 3: map_tax/composite_tax_category (via delivery_tax_category
+      # below) require a resolvable SpreePos::Connection now.
+      let!(:pos_connection) do
+        SpreePos::Connection.create!(store: Spree::Store.first || Spree::Store.default, provider: 'square',
+                                      external_merchant_id: 'sq_merchant_1', catalog_role: 'source')
+      end
 
       def square_object(id:, type:, version: 1, **data_by_key)
         data_key = "#{type.downcase}_data"
@@ -270,6 +283,7 @@ RSpec.describe SpreeSquare::OrderAdapter do
         # to this override at call time.
         tax_default_stock_location
         tax_zone
+        pos_connection # same hook-ordering gotcha as above -- must exist before delivery_tax_category's map_tax call
 
         create(:shipment, order: order, stock_location: stock_location, cost: 7.99).tap do |s|
           rate = s.shipping_rates.first
