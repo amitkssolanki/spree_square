@@ -34,7 +34,7 @@ RSpec.describe 'SpreePos webhooks (new route, square)', type: :request do
   end
 
   it 'accepts a correctly signed payload and enqueues the shared webhook job' do
-    expect(SpreePos::WebhookJob).to receive(:perform_later)
+    expect(SpreePos::CatalogWebhookJob).to receive(:perform_later)
 
     post path, params: body, headers: signed_headers(body)
 
@@ -50,7 +50,7 @@ RSpec.describe 'SpreePos webhooks (new route, square)', type: :request do
   end
 
   it 'does not enqueue a job twice for a duplicate delivery of the same event_id' do
-    expect(SpreePos::WebhookJob).to receive(:perform_later).once
+    expect(SpreePos::CatalogWebhookJob).to receive(:perform_later).once
 
     2.times { post path, params: body, headers: signed_headers(body) }
 

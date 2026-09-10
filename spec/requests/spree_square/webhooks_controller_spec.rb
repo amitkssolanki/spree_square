@@ -3,11 +3,13 @@
 # must "keep working exactly as before"). Retargeted from
 # SpreeSquare::WebhookEvent (square_event_id) onto SpreePos::WebhookEvent
 # (idempotency_key) — same assertions as before this batch, only the model
-# and column names changed. `SpreeSquare::WebhooksController` no longer
-# enqueues the per-type jobs directly; it now goes through
-# SpreePos::WebhookJob (see spec/requests/spree_pos/webhooks_controller_spec.rb
-# in the spree_pos gem for the routing/verification specs shared with the
-# new `/spree_pos/webhooks/:provider` endpoint).
+# and column names changed. `SpreePos::WebhooksController#enqueue_job`
+# dispatches per `event.kind` to the real spree_pos job classes (plan
+# sequence step 18) -- wired at integration once both step 17 (this
+# controller) and step 18 (those job classes) landed; see
+# spec/requests/spree_pos/webhooks_controller_spec.rb in the spree_pos gem
+# for the routing/verification specs shared with the new
+# `/spree_pos/webhooks/:provider` endpoint.
 RSpec.describe 'SpreeSquare webhooks (legacy route)', type: :request do
   let(:signing_key) { 'test-signing-key' }
   let(:path) { '/spree_square/webhooks/square' }
@@ -29,7 +31,7 @@ RSpec.describe 'SpreeSquare webhooks (legacy route)', type: :request do
   end
 
   it 'accepts a correctly signed payload and enqueues the shared webhook job' do
-    expect(SpreePos::WebhookJob).to receive(:perform_later)
+    expect(SpreePos::CatalogWebhookJob).to receive(:perform_later)
 
     post path, params: body, headers: signed_headers(body)
 
@@ -51,7 +53,7 @@ RSpec.describe 'SpreeSquare webhooks (legacy route)', type: :request do
   end
 
   it 'does not enqueue a job twice for a duplicate delivery of the same event_id' do
-    expect(SpreePos::WebhookJob).to receive(:perform_later).once
+    expect(SpreePos::CatalogWebhookJob).to receive(:perform_later).once
 
     2.times { post path, params: body, headers: signed_headers(body) }
 
@@ -85,9 +87,14 @@ RSpec.describe 'SpreeSquare webhooks (legacy route)', type: :request do
         'order.updated' => 'order_changed',
         'order.fulfillment.updated' => 'order_changed'
       }.fetch(event_type)
+      expected_job = {
+        'inventory.count.updated' => SpreePos::InventoryWebhookJob,
+        'order.updated' => SpreePos::OrderWebhookJob,
+        'order.fulfillment.updated' => SpreePos::OrderWebhookJob
+      }.fetch(event_type)
       typed_body = { event_id: "evt_#{event_type}", type: event_type, data: {} }.to_json
 
-      expect(SpreePos::WebhookJob).to receive(:perform_later)
+      expect(expected_job).to receive(:perform_later)
 
       post path, params: typed_body, headers: signed_headers(typed_body)
 
