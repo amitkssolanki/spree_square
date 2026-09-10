@@ -6,8 +6,8 @@ Rails.application.config.after_initialize do
   # a `new_object_url` link unconditionally unless told not to. Found live
   # via the sibling spree_doordash gem's own admin pages, which hit the
   # same bug and fixed it in spree_admin_doordash_tables.rb.
-  Spree.admin.tables.register(:square_order_mappings, model_class: SpreeSquare::OrderMapping,
-                                                        search_param: :square_order_id_cont, new_resource: false)
+  Spree.admin.tables.register(:square_order_mappings, model_class: SpreePos::OrderMapping,
+                                                        search_param: :external_order_id_cont, new_resource: false)
 
   Spree.admin.tables.square_order_mappings.add :order_number,
     label: :order,
@@ -18,8 +18,8 @@ Rails.application.config.after_initialize do
     position: 10,
     method: ->(mapping) { mapping.order&.number }
 
-  Spree.admin.tables.square_order_mappings.add :square_order_id,
-    label: :square_order_id,
+  Spree.admin.tables.square_order_mappings.add :external_order_id,
+    label: :external_order_id,
     type: :string,
     sortable: true,
     filterable: true,
@@ -50,7 +50,7 @@ Rails.application.config.after_initialize do
     default: true,
     position: 50
 
-  Spree.admin.tables.register(:square_webhook_events, model_class: SpreeSquare::WebhookEvent,
+  Spree.admin.tables.register(:square_webhook_events, model_class: SpreePos::WebhookEvent,
                                                         search_param: :event_type_cont, new_resource: false)
 
   Spree.admin.tables.square_webhook_events.add :event_type,

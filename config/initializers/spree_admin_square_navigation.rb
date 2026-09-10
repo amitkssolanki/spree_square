@@ -5,7 +5,7 @@ Rails.application.config.after_initialize do
     icon: 'receipt',
     position: 65,
     active: -> { controller_name == 'square_order_mappings' },
-    if: -> { can?(:manage, SpreeSquare::OrderMapping) }
+    if: -> { can?(:manage, SpreePos::OrderMapping) }
 
   Spree.admin.navigation.sidebar.add :square_webhook_events,
     label: 'Square Webhooks',
@@ -13,7 +13,7 @@ Rails.application.config.after_initialize do
     icon: 'webhook',
     position: 66,
     active: -> { controller_name == 'square_webhook_events' },
-    if: -> { can?(:manage, SpreeSquare::WebhookEvent) }
+    if: -> { can?(:manage, SpreePos::WebhookEvent) }
 
   Spree.admin.navigation.sidebar.add :square_oauth,
     label: 'Square Connection',
