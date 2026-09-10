@@ -134,8 +134,17 @@ module SpreeSquare
       }
     end
 
+    # Phase 3, sequence step 25: the bare, unscoped
+    # StockLocation.find_by(default: true) this fallback used to be is
+    # forbidden in sync/order/webhook paths -- Order#fulfilling_stock_location
+    # (spree_pos, shared with SpreePos::OrderPush's own 16.2 resolution)
+    # replaces it. Same behavior for every order that has a shipment
+    # (the overwhelming majority); the only case that changes is an order
+    # with no shipment at all, which now falls back to
+    # order.preferred_stock_location -- a real, meaningful signal Spree
+    # already provides -- instead of an arbitrary global default.
     def location_mapping_for(order)
-      stock_location = order.shipments.first&.stock_location || Spree::StockLocation.find_by(default: true)
+      stock_location = order.fulfilling_stock_location
       return nil unless stock_location
 
       SpreeSquare::LocationMapping.find_by(spree_stock_location_id: stock_location.id)
