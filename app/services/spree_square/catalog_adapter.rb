@@ -9,21 +9,81 @@ module SpreeSquare
   class CatalogAdapter
     FetchResult = Struct.new(:categories, :modifier_lists, :taxes, :items, :related_objects_by_id, keyword_init: true)
 
-    def initialize(client: SpreeSquare::Client.instance)
+    # `client:` is resolved LAZILY (B3). It used to default to
+    # `SpreeSquare::Client.instance` in the argument list, which meant
+    # merely CONSTRUCTING this adapter reached for a credential and raised
+    # when none was connected. That mattered the moment
+    # SpreeSquare::CatalogObjectMapper started building one just to
+    # convert a single object to a DTO — conversion needs no credential at
+    # all. Only the methods that actually talk to Square (#fetch_raw) do.
+    def initialize(client: nil)
       @client = client
+    end
+
+    # The provider contract's catalog-import entry point, added for
+    # Package B1 (registry-dispatched catalog ORCHESTRATION only).
+    #
+    # `SpreePos::CatalogWebhookJob` / `SpreePos::ReconciliationJob` used to
+    # call `SpreeSquare::CatalogImporter.call` by name from inside
+    # spree_pos. They now reach this method as `provider.catalog.import!`,
+    # so the provider-neutral layer no longer names Square. What happens
+    # BELOW this line is deliberately unchanged:
+    #
+    #   import! -> SpreeSquare::CatalogImporter
+    #           -> SpreeSquare::CatalogObjectMapper (thin facade)
+    #           -> SpreePos::CatalogSync
+    #
+    # and SpreePos::CatalogSync still consumes raw Square SDK objects and
+    # still persists product/variant/category ids to the legacy
+    # SpreeSquare::CatalogMapping / TaxonMapping tables. That is B1's
+    # explicit scope: dispatch is provider-neutral, the mapper underneath
+    # is not yet. See spree_pos/README.md's "Catalog: known technical
+    # debt" section for the two follow-up tasks (B2 ExternalRef, B3 DTOs)
+    # and why neither is done here.
+    #
+    # Note this is a method on the catalog SUB-ADAPTER, not a change to
+    # SpreePos::Provider itself: the registry validates that a provider
+    # responds to `catalog`, never what the returned object responds to.
+    def import!
+      SpreeSquare::CatalogImporter.call
+    end
+
+    # The provider contract's catalog-read entry point
+    # (plan section 8.1: `#fetch_all -> SpreePos::Catalog::Snapshot`).
+    #
+    # Package A: this name used to return the Square-shaped `FetchResult`
+    # below, which meant SpreeSquare::CatalogAdapter did NOT satisfy the
+    # contract it claimed to — caught the first time the shared
+    # `it_behaves_like 'a POS provider'` group was actually run against
+    # Square, which had never happened while no SpreeSquare::Provider
+    # existed. The raw fetch keeps its behaviour verbatim under its own
+    # name (#fetch_raw); only the contract-facing name changed hands.
+    #
+    # Note what this does NOT change: the live import path still uses
+    # #fetch_raw, because SpreePos::CatalogSync consumes raw Square SDK
+    # objects and depends on their `version` token, which none of the
+    # SpreePos::Catalog DTOs carry (see #to_snapshot's own comment). That
+    # is exactly the B3 debt, and it is deliberately untouched here.
+    def fetch_all
+      to_snapshot(fetch_raw)
     end
 
     # Square's search is a single page per call; loop on `cursor` until
     # exhausted. Fine for a restaurant-sized catalog (dozens to low hundreds
     # of items) — not built for bulk/enterprise catalogs. (Moved verbatim
     # from CatalogImporter#fetch_all.)
-    def fetch_all
+    #
+    # Square-shaped on purpose: returns the SDK's own catalog objects,
+    # grouped by type, because that is what the existing import pipeline
+    # needs. Renamed from #fetch_all in Package A so the contract-conforming
+    # name could return a Snapshot; the body is unchanged.
+    def fetch_raw
       objects = []
       related_by_id = {}
       cursor = nil
 
       loop do
-        response = @client.catalog.search(
+        response = client.catalog.search(
           object_types: %w[ITEM CATEGORY MODIFIER_LIST TAX],
           include_related_objects: true,
           cursor: cursor
@@ -78,11 +138,35 @@ module SpreeSquare
       )
     end
 
-    private
+    # Resolved on first real use, never at construction. See #initialize.
+    def client
+      @client ||= SpreeSquare::Client.instance
+    end
+
+    # ------------------------------------------------------------------
+    # Per-object DTO builders. Public because SpreeSquare::CatalogObjectMapper
+    # (the retained backward-compatibility facade) converts a single raw
+    # Square object at a time through these before handing it to
+    # SpreePos::CatalogSync, which as of B3 accepts only DTOs.
+    #
+    # `external_version` is Square's own per-object `version` token — the
+    # optimistic-concurrency value CatalogSync's staleness guard has always
+    # depended on. Carrying it on the DTO is what makes the provider-neutral
+    # sync layer able to keep that protection without knowing it is Square's.
+    # `external_updated_at` is left nil: Square objects have no separate
+    # last-modified timestamp, and `version` is strictly better. A provider
+    # with only a timestamp (Clover's `modifiedTime`) populates the other
+    # field instead; SpreePos::Catalog::Staleness prefers whichever is
+    # available, version first.
+    # ------------------------------------------------------------------
 
     def category_dto(square_object)
       data = square_object.category_data
-      SpreePos::Catalog::Category.new(external_id: square_object.id, name: data.name.presence || 'Uncategorized')
+      SpreePos::Catalog::Category.new(
+        external_id: square_object.id,
+        name: data.name.presence || 'Uncategorized',
+        external_version: square_object.version
+      )
     end
 
     def tax_dto(square_object)
@@ -92,7 +176,8 @@ module SpreeSquare
         name: data.name.presence || 'Square Tax',
         percentage: data.percentage.presence&.to_d || 0,
         included_in_price: (data.inclusion_type == 'INCLUSIVE'),
-        enabled: data.enabled != false
+        enabled: data.enabled != false,
+        external_version: square_object.version
       )
     end
 
@@ -104,7 +189,8 @@ module SpreeSquare
         selection_type: data.selection_type.presence || 'SINGLE',
         min_selected: data.min_selected_modifiers,
         max_selected: data.max_selected_modifiers,
-        modifiers: Array(data.modifiers).map { |m| modifier_dto(m) }
+        modifiers: Array(data.modifiers).map { |m| modifier_dto(m) },
+        external_version: square_object.version
       )
     end
 
@@ -113,7 +199,8 @@ module SpreeSquare
       SpreePos::Catalog::Modifier.new(
         external_id: square_object.id,
         name: data.name.presence || 'Option',
-        price_cents: data.price_money&.amount || 0
+        price_cents: data.price_money&.amount || 0,
+        external_version: square_object.version
       )
     end
 
@@ -132,7 +219,8 @@ module SpreeSquare
         tax_external_ids: Array(data.tax_ids),
         modifier_group_external_ids: modifier_group_ids,
         variations: Array(data.variations).map { |v| variation_dto(v) },
-        available_at_external_location_ids: Array(data.present_at_location_ids)
+        available_at_external_location_ids: Array(data.present_at_location_ids),
+        external_version: square_object.version
       )
     end
 
@@ -143,7 +231,8 @@ module SpreeSquare
         name: data.name,
         sku: square_object.id,
         price_cents: data.price_money&.amount || 0,
-        currency: data.price_money&.currency
+        currency: data.price_money&.currency,
+        external_version: square_object.version
       )
     end
   end

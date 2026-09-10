@@ -1,31 +1,39 @@
 module SpreeSquare
   # Full catalog import: pulls every ITEM + CATEGORY + MODIFIER_LIST + TAX
-  # from Square (with related objects — images, referenced categories —
-  # inlined via `include_related_objects`) and upserts them into Spree via
-  # CatalogObjectMapper. Categories, modifier lists, and taxes are imported
-  # before items so an item can resolve its `category_id` /
-  # `modifier_list_info` / `tax_ids` to an already-mapped record.
+  # from Square and upserts them into Spree. Categories, modifier groups,
+  # and taxes are imported before items so an item can resolve its
+  # category / modifier-group / tax references to an already-mapped record.
   #
-  # Phase 2, step 14 of the multi-POS/multi-location plan: the fetch/
-  # pagination concern (talking to Square) now lives in CatalogAdapter; this
-  # class is the thin job wrapper — fetch, then hand each group to the
-  # mapper in the same fixed order as before.
+  # B3: this now runs entirely on the provider-neutral DTO contract. It
+  # asks the adapter for a `SpreePos::Catalog::Snapshot` and hands those
+  # DTOs straight to `SpreePos::CatalogSync` — no raw Square SDK object
+  # crosses into spree_pos any more, and this class no longer needs the
+  # `SpreeSquare::CatalogObjectMapper` facade at all.
+  #
+  # The import ORDER is load-bearing and unchanged: categories, then
+  # modifier groups, then taxes, then items. `map_item` resolves each of
+  # those three by external id against rows this loop has already written.
   class CatalogImporter
     Result = Struct.new(:categories_count, :modifier_lists_count, :taxes_count, :items_count, keyword_init: true)
 
     def self.call = new.call
 
     def call
-      fetched = SpreeSquare::CatalogAdapter.new.fetch_all
-      mapper = SpreeSquare::CatalogObjectMapper.new(related_objects_by_id: fetched.related_objects_by_id)
+      adapter = SpreeSquare::CatalogAdapter.new
+      snapshot = adapter.fetch_all
 
-      fetched.categories.each { |category| mapper.map_category(category) }
-      fetched.modifier_lists.each { |list| mapper.map_modifier_list(list) }
-      fetched.taxes.each { |tax| mapper.map_tax(tax) }
-      fetched.items.each { |item| mapper.map_item(item) }
+      # B2: no mapping model is injected any more. CatalogSync persists to
+      # SpreePos::ExternalRef, its own gem's neutral table, scoped to the
+      # connection it resolves.
+      sync = SpreePos::CatalogSync.new
 
-      Result.new(categories_count: fetched.categories.size, modifier_lists_count: fetched.modifier_lists.size,
-                 taxes_count: fetched.taxes.size, items_count: fetched.items.size)
+      snapshot.categories.each { |category| sync.map_category(category) }
+      snapshot.modifier_groups.each { |group| sync.map_modifier_list(group) }
+      snapshot.taxes.each { |tax| sync.map_tax(tax) }
+      snapshot.items.each { |item| sync.map_item(item) }
+
+      Result.new(categories_count: snapshot.categories.size, modifier_lists_count: snapshot.modifier_groups.size,
+                 taxes_count: snapshot.taxes.size, items_count: snapshot.items.size)
     end
   end
 end

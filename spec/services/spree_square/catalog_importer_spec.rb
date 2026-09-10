@@ -1,9 +1,15 @@
 require 'json'
 
 # Characterization spec, written in Phase 0 of the multi-POS/multi-location
-# plan before CatalogImporter moves anywhere — the behaviour asserted here
-# must survive the Phase 2 extraction unchanged (a changed expectation
-# during that phase is itself a stop signal, per the plan).
+# plan before CatalogImporter moves anywhere.
+#
+# B3 UPDATE: the collaborator changed and so did this spec's doubles, but
+# NOT its assertions. CatalogImporter used to build a
+# SpreeSquare::CatalogObjectMapper and feed it raw Square objects; it now
+# builds a SpreePos::CatalogSync and feeds it provider-neutral DTOs. What
+# is asserted — the import ORDER (categories, modifier groups, taxes,
+# items), cursor pagination, and the reported counts — is unchanged,
+# because that behaviour had to be preserved exactly.
 #
 # Object identities below come from the real, officially-documented Square
 # object shapes recorded in spec/fixtures/square/search_catalog_objects.json
@@ -15,13 +21,36 @@ RSpec.describe SpreeSquare::CatalogImporter do
     JSON.parse(File.read(FIXTURE_PATH))['objects']
   end
 
-  # A minimal stand-in for the Fern SDK's typed CatalogObject — CatalogImporter
-  # itself only ever calls #type (to group) and passes the object through, so
-  # unlike CatalogObjectMapper's own spec this doesn't need the full
-  # `<type>_data` OpenStruct payload attached. See catalog_object_mapper_spec
-  # for why a plain double (not instance_double) is deliberate here too.
+  # A minimal stand-in for the Fern SDK's typed CatalogObject. B3: the
+  # importer now converts each object to a DTO before handing it on, so
+  # these doubles need the `<type>_data` payload the adapter's DTO
+  # builders read (they did not before, when the raw object was passed
+  # straight through). See catalog_object_mapper_spec for why a plain
+  # double (not instance_double) is deliberate here too.
+  DATA_KEY = {
+    'CATEGORY' => :category_data, 'MODIFIER_LIST' => :modifier_list_data,
+    'TAX' => :tax_data, 'ITEM' => :item_data, 'IMAGE' => :image_data
+  }.freeze
+
   def square_object(raw)
-    double("Square::Types::CatalogObject(#{raw['type']})", id: raw['id'], type: raw['type'], version: raw['version'])
+    attrs = { id: raw['id'], type: raw['type'], version: raw['version'] }
+    key = DATA_KEY[raw['type']]
+    attrs[key] = OpenStruct.new(payload_for(raw['type'])) if key
+    double("Square::Types::CatalogObject(#{raw['type']})", **attrs)
+  end
+
+  # Just enough of each `<type>_data` shape for the adapter's DTO builders;
+  # the values themselves are irrelevant to what this spec asserts.
+  def payload_for(type)
+    case type
+    when 'CATEGORY'      then { name: 'Cat' }
+    when 'MODIFIER_LIST' then { name: 'List', selection_type: 'SINGLE', min_selected_modifiers: nil,
+                                max_selected_modifiers: nil, modifiers: [] }
+    when 'TAX'           then { name: 'Tax', percentage: '8.0', inclusion_type: 'ADDITIVE', enabled: true }
+    when 'ITEM'          then { name: 'Item', description: nil, image_ids: [], category_id: nil, categories: [],
+                                tax_ids: [], modifier_list_info: [], variations: [], present_at_location_ids: [] }
+    else {}
+    end
   end
 
   def search_response(objects:, related: [], cursor: nil)
@@ -39,12 +68,14 @@ RSpec.describe SpreeSquare::CatalogImporter do
 
   let(:client) { instance_double(SpreeSquare::Client) }
   let(:catalog_api) { double('catalog_api') }
-  let(:mapper) { instance_double(SpreeSquare::CatalogObjectMapper) }
+  # B3: the importer's collaborator is now the provider-neutral sync,
+  # receiving DTOs.
+  let(:mapper) { instance_double(SpreePos::CatalogSync) }
 
   before do
     allow(SpreeSquare::Client).to receive(:instance).and_return(client)
     allow(client).to receive(:catalog).and_return(catalog_api)
-    allow(SpreeSquare::CatalogObjectMapper).to receive(:new).and_return(mapper)
+    allow(SpreePos::CatalogSync).to receive(:new).and_return(mapper)
   end
 
   describe '#call' do

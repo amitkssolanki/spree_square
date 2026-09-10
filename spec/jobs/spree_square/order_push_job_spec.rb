@@ -2,10 +2,14 @@ RSpec.describe SpreeSquare::OrderPushJob do
   let(:order) { create(:order, state: 'complete', completed_at: Time.current) }
 
   describe '#perform' do
-    it 'pushes the order to Square via the provider-neutral SpreePos::OrderPush' do
-      expect(SpreePos::OrderPush).to receive(:call).with(
-        order, adapter: instance_of(SpreeSquare::OrderAdapter), order_idempotency_key: true
-      )
+    # Package A: this job no longer injects a Square adapter or asserts
+    # Square's idempotency capability on its behalf. It hands the order to
+    # the provider-neutral service, which resolves both through the
+    # registry from the connection behind the order's fulfilling location.
+    # The adapter/capability resolution itself is covered in
+    # spec/services/spree_pos/order_push_registry_spec.rb.
+    it 'hands the order to the provider-neutral SpreePos::OrderPush with no injected adapter' do
+      expect(SpreePos::OrderPush).to receive(:call).with(order)
 
       described_class.perform_now(order.id)
     end

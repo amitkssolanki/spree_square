@@ -17,6 +17,12 @@ module SpreeSquare
   class TaxonMapping < Spree.base_class
     self.table_name = 'spree_square_taxon_mappings'
 
+    # Provider-neutral aliases — see SpreeSquare::CatalogMapping's own
+    # comment for why (B3). CatalogSync addresses this class only as
+    # `external_id` / `external_version`.
+    alias_attribute :external_id, :square_category_id
+    alias_attribute :external_version, :square_version
+
     belongs_to :taxon, class_name: 'Spree::Category', foreign_key: 'spree_taxon_id'
 
     validates :square_category_id, presence: true, uniqueness: true

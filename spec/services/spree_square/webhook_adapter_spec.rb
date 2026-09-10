@@ -105,15 +105,76 @@ RSpec.describe SpreeSquare::WebhookAdapter do
     end
   end
 
-  describe '.parse' do
-    it 'returns the idempotency_key, kind and event_type generically' do
+  # Was `.parse`, which returned one hash per delivery. The neutral
+  # contract is now `.extract_events` returning zero or more
+  # SpreePos::Webhooks::Event values, because a provider may batch several
+  # merchants into one POST. Square never does, so this always returns
+  # exactly one, and the fields it resolved before are unchanged.
+  describe '.extract_events' do
+    it 'returns exactly one event, since Square sends one per delivery' do
       payload = { 'event_id' => 'evt_1', 'type' => 'catalog.version.updated' }
 
-      expect(described_class.parse(payload)).to eq(
-        idempotency_key: 'evt_1',
-        kind: 'catalog_changed',
-        event_type: 'catalog.version.updated'
-      )
+      events = described_class.extract_events(payload)
+
+      expect(events.size).to eq(1)
+      expect(events.first).to be_a(SpreePos::Webhooks::Event)
+    end
+
+    it 'resolves the idempotency_key, kind and event_type generically' do
+      payload = { 'event_id' => 'evt_1', 'type' => 'catalog.version.updated' }
+
+      event = described_class.extract_events(payload).first
+
+      expect(event.idempotency_key).to eq('evt_1')
+      expect(event.kind).to eq('catalog_changed')
+      expect(event.event_type).to eq('catalog.version.updated')
+    end
+
+    # Tenant routing. Square names the merchant on every event; the
+    # controller resolves it to a SpreePos::Connection.
+    it 'carries the merchant id so the event can be routed to a connection' do
+      payload = { 'event_id' => 'evt_1', 'type' => 'order.updated', 'merchant_id' => 'MERCH_1' }
+
+      expect(described_class.extract_events(payload).first.external_merchant_id).to eq('MERCH_1')
+    end
+
+    it "carries the location id when the event names one, so a franchise's event reaches the right restaurant" do
+      payload = { 'event_id' => 'evt_1', 'type' => 'order.updated',
+                  'data' => { 'id' => 'ord_1', 'object' => { 'location_id' => 'LOC_1' } } }
+
+      event = described_class.extract_events(payload).first
+
+      expect(event.external_location_id).to eq('LOC_1')
+      expect(event.resource_ref).to eq('ord_1')
+    end
+
+    it 'leaves the location nil rather than guessing when the event names none' do
+      payload = { 'event_id' => 'evt_1', 'type' => 'catalog.version.updated' }
+
+      expect(described_class.extract_events(payload).first.external_location_id).to be_nil
+    end
+
+    # `raw` is the slice of the delivery this event describes. With one
+    # event per delivery that is the whole payload, which is what
+    # SpreePos::OrderWebhookJob goes on handing to extract_order_status.
+    it 'carries the whole payload as raw, which is what the order job reads' do
+      payload = { 'event_id' => 'evt_1', 'type' => 'order.updated' }
+
+      expect(described_class.extract_events(payload).first.raw).to eq(payload)
+    end
+
+    it 'parses the event timestamp' do
+      payload = { 'event_id' => 'evt_1', 'type' => 'order.updated', 'created_at' => '2026-09-10T12:00:00Z' }
+
+      expect(described_class.extract_events(payload).first.occurred_at).to eq(Time.utc(2026, 9, 10, 12, 0, 0))
+    end
+
+    # Losing observability metadata must never cost us the event itself.
+    it 'tolerates an unparseable timestamp rather than raising' do
+      payload = { 'event_id' => 'evt_1', 'type' => 'order.updated', 'created_at' => 'not a time' }
+
+      expect { described_class.extract_events(payload) }.not_to raise_error
+      expect(described_class.extract_events(payload).first.occurred_at).to be_nil
     end
   end
 

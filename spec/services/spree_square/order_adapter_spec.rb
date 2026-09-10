@@ -11,17 +11,35 @@ RSpec.describe SpreeSquare::OrderAdapter do
     Spree::LineItem.set_callback(:save, :after, :update_inventory)
   end
 
-  let(:stock_location) { create(:stock_location) }
+  let(:store) { Spree::Store.first || Spree::Store.default }
+  let(:stock_location) { create(:stock_location, store: store) }
   let!(:location_mapping) do
     SpreeSquare::LocationMapping.create!(stock_location: stock_location, square_location_id: 'sq_loc_1')
   end
 
+  # B2: the adapter resolves a line item's catalog_object_id through
+  # SpreePos::ExternalRef, scoped to the POS connection that owns the
+  # location the order is fulfilled from -- not the legacy
+  # SpreeSquare::CatalogMapping. So the fixture needs the whole chain the
+  # production path walks: connection -> SpreePos::Location (which is what
+  # attributes this stock location to that connection) -> ExternalRef.
+  let!(:pos_connection) do
+    SpreePos::Connection.create!(store: store, provider: 'square',
+                                  external_merchant_id: 'sq_merchant_1', catalog_role: 'source')
+  end
+  let!(:pos_location) do
+    SpreePos::Location.create!(pos_connection: pos_connection, stock_location: stock_location,
+                                external_location_id: 'sq_loc_1')
+  end
+
   let(:variant) { create(:variant) }
-  let!(:catalog_mapping) do
-    SpreeSquare::CatalogMapping.create!(
-      square_catalog_object_id: 'sq_variation_1',
-      square_object_type: SpreeSquare::CatalogMapping::ITEM_VARIATION,
-      variant: variant
+  let!(:external_ref) do
+    SpreePos::ExternalRef.create!(
+      pos_connection: pos_connection,
+      resource_type: SpreePos::ExternalRef::RESOURCE_VARIATION,
+      external_id: 'sq_variation_1',
+      spree_type: 'Spree::Variant',
+      spree_id: variant.id
     )
   end
 
@@ -117,6 +135,14 @@ RSpec.describe SpreeSquare::OrderAdapter do
     let(:state) { create(:state, name: 'Ohio', abbr: 'OH') }
     let!(:tax_zone) { create(:zone, name: 'OH Sales Tax', kind: 'state').tap { |z| z.members.create!(zoneable: state) } }
     let!(:tax_default_stock_location) { create(:stock_location, default: true, state: state, country: state.country) }
+    # Overridden to sit in the taxed state. Since B2 the outer
+    # `let!(:pos_location)` attaches this location to the POS connection,
+    # and SpreePos::CatalogSync#fulfilling_stock_location_for_tax prefers a
+    # connection's OWN mapped location over the store default -- which is
+    # the correct production behaviour (a franchise's locations can be in
+    # different states) and means the location this order ships from is the
+    # one whose tax zone has to exist.
+    let(:stock_location) { create(:stock_location, store: store, state: state, country: state.country) }
     let(:mapper) { SpreeSquare::CatalogObjectMapper.new }
 
     def square_object(id:, type:, version: 1, **data_by_key)
@@ -246,6 +272,9 @@ RSpec.describe SpreeSquare::OrderAdapter do
       let(:state) { create(:state, name: 'Ohio', abbr: 'OH') }
       let!(:tax_zone) { create(:zone, name: 'OH Sales Tax', kind: 'state').tap { |z| z.members.create!(zoneable: state) } }
       let!(:tax_default_stock_location) { create(:stock_location, default: true, state: state, country: state.country) }
+      # Same reason as the describe above: the connection's own mapped
+      # location wins over the store default when resolving the tax zone.
+      let(:stock_location) { create(:stock_location, store: store, state: state, country: state.country) }
       let(:mapper) { SpreeSquare::CatalogObjectMapper.new }
       # Phase 3: map_tax/composite_tax_category (via delivery_tax_category
       # below) require a resolvable SpreePos::Connection now.

@@ -58,6 +58,45 @@ module SpreeSquare
       Dir.glob(File.join(File.dirname(__FILE__), '../../app/**/*_decorator*.rb')) do |c|
         Rails.application.config.cache_classes ? require(c) : load(c)
       end
+
+      register_pos_provider!
+    end
+
+    # Registers Square with the SpreePos registry on every real boot — not
+    # only in specs, which is what made the whole provider indirection
+    # inert before this change (`SpreePos.providers` was literally `{}` in
+    # production).
+    #
+    # Why here, inside `activate`/`to_prepare`, and not in an
+    # `initializer` block:
+    #
+    #   * `SpreeSquare::Provider` is an autoloaded constant under this
+    #     engine's own `app/services`. Referencing an autoloadable
+    #     constant from an `initializer` runs before the autoloaders are
+    #     set up and raises (or, worse, permanently caches a class that a
+    #     later reload replaces). `to_prepare` runs after autoloading is
+    #     ready, which is exactly the constraint the decorator force-load
+    #     above already lives under.
+    #   * `to_prepare` re-runs on every reload in development. That is a
+    #     feature here, not a hazard: after a reload `SpreeSquare::Provider`
+    #     is a brand-new Class object, and re-registering replaces the
+    #     stale one. A registry populated once at boot would hand out an
+    #     unloaded class after the first edit.
+    #
+    # Idempotent by construction: `SpreePos.register` is a Hash assignment
+    # keyed on `.key`, so running it repeatedly is a no-op beyond
+    # re-validating the contract (cheap, and a genuinely useful assertion
+    # to re-run after a reload).
+    #
+    # `spree_pos` is a hard gemspec dependency of this gem, so `SpreePos`
+    # is always defined by the time this runs; the `defined?` guard is for
+    # the one case that is not true — a host app that loaded this engine
+    # without the dependency resolved (broken Gemfile state) — where a
+    # NameError here would be a confusing way to find out.
+    def self.register_pos_provider!
+      return unless defined?(::SpreePos) && ::SpreePos.respond_to?(:register)
+
+      ::SpreePos.register(::SpreeSquare::Provider)
     end
 
     config.to_prepare(&method(:activate).to_proc)

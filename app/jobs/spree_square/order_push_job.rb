@@ -39,9 +39,22 @@ module SpreeSquare
       )
     end
 
+    # Package A: no longer injects a concrete Square adapter, and no longer
+    # asserts `order_idempotency_key: true` on Square's behalf.
+    # SpreePos::OrderPush resolves both through the registry, from the
+    # connection behind the order's own fulfilling location — so an order
+    # fulfilled at a location wired to a different provider is pushed
+    # through that provider, which is the whole point of the franchise
+    # model. The `:order_idempotency_key` capability is read off the
+    # resolved provider class (Square declares it), preserving the
+    # `failed`-not-`ambiguous` behaviour this job has always had.
+    #
+    # This job stays in the Square gem because Square's own
+    # `order.completed` subscriber enqueues it; it is a provider-owned
+    # entry point, not provider-neutral orchestration.
     def perform(order_id)
       order = Spree::Order.find(order_id)
-      SpreePos::OrderPush.call(order, adapter: SpreeSquare::OrderAdapter.new, order_idempotency_key: true)
+      SpreePos::OrderPush.call(order)
     end
   end
 end

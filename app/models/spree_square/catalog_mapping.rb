@@ -9,6 +9,24 @@ module SpreeSquare
     ITEM = 'item'.freeze
     ITEM_VARIATION = 'item_variation'.freeze
 
+    # Provider-neutral names for this table's Square-specific columns
+    # (B3). SpreePos::CatalogSync is handed this class by the Square side
+    # and addresses it only through these — it never sees, and must never
+    # see, `square_catalog_object_id` / `square_object_type` /
+    # `square_version`. ActiveRecord resolves attribute aliases in
+    # `where` / `find_or_initialize_by` as well as in readers/writers, so
+    # this is a complete substitution, not just a reader convenience.
+    #
+    # This is also the seam B2 swaps: an ExternalRef-backed class exposing
+    # the same five names can replace this one with no change to
+    # CatalogSync at all.
+    alias_attribute :external_id, :square_catalog_object_id
+    alias_attribute :resource_type, :square_object_type
+    alias_attribute :external_version, :square_version
+
+    RESOURCE_ITEM = ITEM
+    RESOURCE_VARIATION = ITEM_VARIATION
+
     belongs_to :product, class_name: 'Spree::Product', foreign_key: 'spree_product_id', optional: true
     belongs_to :variant, class_name: 'Spree::Variant', foreign_key: 'spree_variant_id', optional: true
 

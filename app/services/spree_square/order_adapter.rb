@@ -8,6 +8,14 @@ module SpreeSquare
   # SpreeSquare::OrderPusher (step 16b) -- both moved here verbatim (logic
   # unchanged) as the two halves of one Square-specific adapter.
   class OrderAdapter
+    # `connection:` is supplied by SpreeSquare::Provider#orders, which is
+    # built with the connection SpreePos::OrderPush resolved from the
+    # order's own fulfilling location. It scopes the catalog-object lookup
+    # in #build_line_item (B2).
+    def initialize(connection: nil)
+      @connection = connection
+    end
+
     # Builds the Square CreateOrder payload for a completed Spree::Order.
     # Deliberately omits discounts — nothing for Square's own discount engine
     # to add on top of what we send and create a mismatch. Everything Square
@@ -35,6 +43,8 @@ module SpreeSquare
     def build_payload(order)
       location_mapping = location_mapping_for(order)
       raise "No Square location mapped for order #{order.number}" unless location_mapping
+
+      @resolved_connection = resolve_connection(location_mapping)
 
       # Memoized per tax_category (not per line item) — an order commonly has
       # several line items sharing the same product/tax_category, and this
@@ -152,10 +162,7 @@ module SpreeSquare
 
     def build_line_item(line_item)
       currency = (line_item.currency || 'USD').upcase
-      catalog_mapping = SpreeSquare::CatalogMapping.find_by(
-        spree_variant_id: line_item.variant_id,
-        square_object_type: SpreeSquare::CatalogMapping::ITEM_VARIATION
-      )
+      catalog_object_id = external_variation_id_for(line_item.variant_id)
       modifiers = SpreeSquare::LineItemModifier.where(line_item_id: line_item.id).to_a
       modifier_total_cents = modifiers.sum(&:price_cents_snapshot)
       base_price_cents = (line_item.price * 100).round - modifier_total_cents
@@ -171,11 +178,61 @@ module SpreeSquare
       {
         quantity: line_item.quantity.to_s,
         name: line_item.name,
-        catalog_object_id: catalog_mapping&.square_catalog_object_id,
+        catalog_object_id: catalog_object_id,
         base_price_money: { amount: base_price_cents, currency: currency },
         modifiers: modifiers.map { |modifier| build_modifier(modifier, currency) },
         applied_taxes: applied_taxes.presence
       }.compact
+    end
+
+    # B2: resolves a Spree::Variant to the provider's own catalog object id
+    # through SpreePos::ExternalRef, connection-scoped, rather than the
+    # legacy SpreeSquare::CatalogMapping. Migrated in the same change as
+    # the catalog write cutover because dual-write was rejected: once
+    # CatalogSync writes only ExternalRef, a variant synced afterwards has
+    # no legacy row, and this lookup would have started returning nil for
+    # it.
+    #
+    # BEHAVIOUR ON A MISS IS DELIBERATELY UNCHANGED. A nil here produces a
+    # line item with no `catalog_object_id`, which Square accepts as an
+    # ad-hoc line (name + price only). That has always been the behaviour
+    # for a variant with no catalog mapping, and it is what the delivery
+    # fee relies on. B2 does not narrow or widen it — it only changes
+    # which table answers the question.
+    #
+    # A nil @connection (an adapter constructed directly, e.g. in specs)
+    # scopes to `pos_connection_id IS NULL`, matches nothing, and lands on
+    # that same ad-hoc path rather than resolving another connection's row.
+    def external_variation_id_for(variant_id)
+      SpreePos::ExternalRef
+        .for_connection(@resolved_connection)
+        .of_type(SpreePos::ExternalRef::RESOURCE_VARIATION)
+        .find_by(spree_type: 'Spree::Variant', spree_id: variant_id)
+        &.external_id
+    end
+
+    # The connection supplied by the provider, else the one that owns the
+    # location this order is being fulfilled from. Never a global or
+    # default lookup: an order is fulfilled by exactly one location, and
+    # that location belongs to exactly one POS connection.
+    #
+    # Logged rather than swallowed when it resolves to nothing, because
+    # the consequence is quiet and wide: every line item would fall through
+    # to the ad-hoc (no catalog_object_id) shape that #build_line_item
+    # otherwise reserves for genuinely unmapped variants, and Square would
+    # accept the ticket without complaint.
+    def resolve_connection(location_mapping)
+      connection = @connection ||
+                   SpreePos::Location.find_by(
+                     spree_stock_location_id: location_mapping.spree_stock_location_id
+                   )&.pos_connection
+      return connection if connection
+
+      Rails.logger.warn(
+        "[SpreeSquare] order push for Square location #{location_mapping.square_location_id.inspect} could not be " \
+        'attributed to a SpreePos::Connection - every line item will be sent ad-hoc, with no catalog_object_id.'
+      )
+      nil
     end
 
     # Ad-hoc line item — no catalog_object_id, since a live-quoted delivery

@@ -3,17 +3,20 @@
 #   POST /spree_pos/webhooks/:provider
 #
 # Lives in spree_square's spec suite (not spree_pos's) because it needs
-# both SpreePos::WebhooksController and SpreeSquare::WebhookAdapter loaded
-# together — spree_pos's own dummy app has no Square adapter at all. The
-# FakeSquareProviderForWebhookRouting registration in spec/support stands
-# in for the real SpreeSquare::Provider registration, which does not exist
-# anywhere in this codebase yet (see this batch's report) — without
-# *something* registered under :square, SpreePos.provider('square') raises
-# ArgumentError and every request here would 404 regardless of signature.
+# both SpreePos::WebhooksController and the real SpreeSquare::WebhookAdapter
+# loaded together — spree_pos's own dummy app has no Square adapter at all.
+#
+# Package A: this used to register a placeholder
+# `FakeSquareProviderForWebhookRouting` under :square, because no real
+# SpreeSquare::Provider existed. That placeholder is gone; these requests
+# now resolve the REAL provider that SpreeSquare::Engine registered during
+# boot. Nothing here registers or unregisters anything — if Square's own
+# boot-time registration were to break, these specs would fail, which is
+# exactly the coupling we want.
 #
 # Behaviourally this mirrors spec/requests/spree_square/webhooks_controller_spec.rb
-# (the legacy route) exactly, because both routes end up calling the exact
-# same #handle_square path.
+# (the legacy route) exactly, because both routes run the same
+# provider-neutral #handle path against the same registered provider.
 RSpec.describe 'SpreePos webhooks (new route, square)', type: :request do
   let(:signing_key) { 'test-signing-key' }
   let(:path) { '/spree_pos/webhooks/square' }
@@ -22,10 +25,7 @@ RSpec.describe 'SpreePos webhooks (new route, square)', type: :request do
   before do
     client = instance_double(SpreeSquare::Client, webhook_signature_key: signing_key)
     allow(SpreeSquare::Client).to receive(:instance).and_return(client)
-    SpreePos.register(FakeSquareProviderForWebhookRouting)
   end
-
-  after { SpreePos.providers.delete(:square) }
 
   def signed_headers(body, url: "http://www.example.com#{path}")
     digest = OpenSSL::HMAC.digest('sha256', signing_key, "#{url}#{body}")

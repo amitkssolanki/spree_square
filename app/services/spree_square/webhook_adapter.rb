@@ -59,21 +59,55 @@ module SpreeSquare
         payload['event_id']
       end
 
+      # Square timestamps every event with an RFC 3339 `created_at`. Parse
+      # failures return nil rather than raising: `occurred_at` is
+      # observability metadata, and losing it must never cost us the event
+      # itself.
+      def parse_time(value)
+        return nil if value.blank?
+
+        Time.zone.parse(value.to_s)
+      rescue ArgumentError, TypeError
+        nil
+      end
+
       # Maps Square's raw `type` string to SpreePos::WebhookEvent's closed
       # `kind` vocabulary (plan 15.4's event-to-action table).
       def kind_for(event_type)
         EVENT_KIND_MAP.fetch(event_type, 'unknown')
       end
 
-      # Everything SpreePos::WebhooksController / SpreeSquare::WebhooksController
-      # need, generically, to record one SpreePos::WebhookEvent. No
-      # persistence, no side effects.
-      def parse(payload)
-        {
-          idempotency_key: idempotency_key_for(payload),
-          kind: kind_for(payload['type']),
-          event_type: payload['type']
-        }
+      # The provider-neutral webhook contract: zero or more
+      # SpreePos::Webhooks::Event values per delivery. No persistence, no
+      # side effects.
+      #
+      # Square always sends exactly ONE event per POST, so this always
+      # returns a one-element array. The array shape is not Square's
+      # concern -- it exists because the contract has to serve a provider
+      # that batches several merchants into one delivery, and a uniform
+      # shape is what keeps SpreePos::WebhooksController free of any
+      # per-provider branch.
+      #
+      # `raw:` is the whole payload here, for the same reason: with one
+      # event per delivery, the event's own slice IS the delivery, and
+      # SpreePos::OrderWebhookJob goes on handing that payload straight
+      # back to `extract_order_status` exactly as before.
+      def extract_events(payload)
+        [
+          SpreePos::Webhooks::Event.new(
+            idempotency_key: idempotency_key_for(payload),
+            external_merchant_id: payload['merchant_id'],
+            # Square's location, when the event names one. Left nil rather
+            # than guessed: an event routed to the wrong restaurant is the
+            # single easiest way to break a franchise.
+            external_location_id: payload.dig('data', 'object', 'location_id'),
+            kind: kind_for(payload['type']),
+            event_type: payload['type'],
+            resource_ref: payload.dig('data', 'id'),
+            occurred_at: parse_time(payload['created_at']),
+            raw: payload
+          )
+        ]
       end
 
       # For SpreeSquare::OrderWebhookJob to call once Agent D3 rewires it

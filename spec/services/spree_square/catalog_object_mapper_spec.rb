@@ -23,6 +23,18 @@ RSpec.describe SpreeSquare::CatalogObjectMapper do
     )
   end
 
+  # B2: item/variation/category mapping writes SpreePos::ExternalRef, which
+  # is connection-scoped (pos_connection_id is NOT NULL), so a resolvable
+  # catalog-source connection is now a precondition for every map_* call --
+  # not just the tax/modifier ones that needed one since Phase 3. The
+  # legacy SpreeSquare::CatalogMapping/TaxonMapping tables this replaced
+  # had no connection column at all, which is why these specs never needed
+  # one before.
+  let!(:pos_connection) do
+    SpreePos::Connection.create!(store: store, provider: 'square',
+                                  external_merchant_id: 'sq_merchant_1', catalog_role: 'source')
+  end
+
   before do
     Spree::ShippingCategory.find_or_create_by!(name: 'Default')
     Spree::Channel.find_or_create_by!(code: 'online') { |c| c.name = 'Online Store'; c.store = store }
@@ -50,12 +62,24 @@ RSpec.describe SpreeSquare::CatalogObjectMapper do
       expect(product.product_publications.exists?).to be true
     end
 
-    it 'records a CatalogMapping for the item' do
+    # Was 'records a CatalogMapping for the item'. B2 moved the catalog
+    # write path onto SpreePos::ExternalRef; the assertion tracks the move.
+    it 'records a SpreePos::ExternalRef for the item, scoped to the connection' do
       product = mapper.map_item(item)
-      mapping = SpreeSquare::CatalogMapping.find_by(square_catalog_object_id: 'sq_item_1')
+      ref = SpreePos::ExternalRef.find_by(external_id: 'sq_item_1')
 
-      expect(mapping.square_object_type).to eq(SpreeSquare::CatalogMapping::ITEM)
-      expect(mapping.product).to eq(product)
+      expect(ref.resource_type).to eq(SpreePos::ExternalRef::RESOURCE_ITEM)
+      expect(ref.pos_connection).to eq(pos_connection)
+      expect(ref.spree_type).to eq('Spree::Product')
+      expect(ref.product).to eq(product)
+    end
+
+    # Dual-write was explicitly rejected for B2: the legacy tables are kept
+    # (they still hold pre-cutover production rows for the reconciliation
+    # tooling to read) but nothing writes to them any more. If this ever
+    # starts failing, the cutover has silently regressed into a dual-write.
+    it 'writes NOTHING to the legacy SpreeSquare::CatalogMapping table' do
+      expect { mapper.map_item(item) }.not_to change(SpreeSquare::CatalogMapping, :count).from(0)
     end
 
     it 're-syncing the same item updates it in place rather than duplicating it' do
