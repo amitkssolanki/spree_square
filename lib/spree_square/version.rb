@@ -1,5 +1,5 @@
 module SpreeSquare
-  VERSION = '0.2.5'.freeze
+  VERSION = '2.0.0'.freeze
 
   def gem_version
     Gem::Version.new(VERSION)

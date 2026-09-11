@@ -31,9 +31,23 @@ namespace :spree_square do
     # be typed: the default refuses, because unresolved rows mean a human has
     # not finished deciding.
     task migrate: :environment do
+      # THE ACCIDENTAL-TRIGGER GUARD. Typing the task name alone does
+      # nothing: the operator must supply the digest of a dry-run plan they
+      # reviewed, and the Migrator refuses if the data no longer produces it.
+      confirmed = ENV['B2_CONFIRM_PLAN'].to_s.strip
+      if confirmed.empty?
+        abort <<~MSG
+          REFUSING: spree_square:b2:migrate mutates the database and must be confirmed against a reviewed plan.
+            1. Run  bin/rails spree_square:b2:dry_run  and review the MUTATION PLAN it prints.
+            2. Re-run this task with  B2_CONFIRM_PLAN=<the "Plan digest" that dry run printed>.
+          Nothing was written.
+        MSG
+      end
+
       report = SpreeSquare::LegacyCatalogReconciliation.migrate!(
         connection: b2_connection,
-        allow_unresolved: ENV['ALLOW_UNRESOLVED'].present?
+        allow_unresolved: ENV['ALLOW_UNRESOLVED'].present?,
+        expected_plan_digest: confirmed
       )
       puts report
       puts "\nApplied #{report.applied.size} ExternalRef row(s)."

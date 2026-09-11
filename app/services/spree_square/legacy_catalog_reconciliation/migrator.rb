@@ -26,9 +26,10 @@ module SpreeSquare
       # assumed, and applying anyway would be acting on a stale plan.
       class InvariantViolation < SpreePos::PermanentError; end
 
-      def initialize(connection: nil, allow_unresolved: false)
+      def initialize(connection: nil, allow_unresolved: false, expected_plan_digest: nil)
         @connection = connection
         @allow_unresolved = allow_unresolved
+        @expected_plan_digest = expected_plan_digest.presence
       end
 
       # @return [Report] the same report the dry run would have produced,
@@ -37,6 +38,7 @@ module SpreeSquare
       #   pre-mutation checks fail.
       def call
         report = Analyzer.new(connection: @connection).call
+        verify_plan_digest!(report) if @expected_plan_digest
         enforce_invariants!(report)
         applied = []
 
@@ -53,6 +55,19 @@ module SpreeSquare
       end
 
       private
+
+      # Checked against THIS analysis, not the one the operator reviewed, so
+      # there is no window between confirming and mutating in which the data
+      # can change unnoticed. Runs before the transaction, like every gate.
+      def verify_plan_digest!(report)
+        actual = report.plan_digest
+        return if ActiveSupport::SecurityUtils.secure_compare(actual, @expected_plan_digest.to_s)
+
+        raise InvariantViolation,
+              "REFUSING TO MUTATE: plan digest mismatch. The dry run you confirmed produced #{@expected_plan_digest}; " \
+              "the data now produces #{actual}. Something changed since that dry run. Re-run the dry run, review " \
+              'the new plan, and confirm its digest.'
+      end
 
       # The refusal gate. Runs BEFORE the transaction opens, so a violation
       # costs nothing and leaves nothing half-done.

@@ -1,3 +1,5 @@
+require 'digest'
+
 module SpreeSquare
   module LegacyCatalogReconciliation
     # The result of an analysis: every Finding, plus deterministic counts
@@ -80,7 +82,31 @@ module SpreeSquare
           lines << 'No unresolved rows. The mutation would proceed.'
         end
 
+        lines << ''
+        lines << "Plan digest: #{plan_digest}"
+        lines << '  The migrate task refuses without it: pass B2_CONFIRM_PLAN=<this digest>.'
+
         lines.join("\n")
+      end
+
+      # A short, stable fingerprint of exactly what a mutation would do: the
+      # convertible rows it would insert, and the unresolved rows it would
+      # leave. Printed by the dry run, and REQUIRED by the migrate task.
+      #
+      # This is the accidental-trigger guard. Typing the task name is not
+      # enough; the operator has to supply the digest of a plan they actually
+      # reviewed. And because the Migrator recomputes it from its own fresh
+      # analysis, a digest from a stale dry run (data changed since) does
+      # not match, so an unreviewed plan can never be applied.
+      #
+      # Each entry is serialized to JSON before sorting so a nil in one
+      # column can never make the sort raise.
+      def plan_digest
+        canonical = {
+          convertible: convertible.map { |f| JSON.generate([f.pos_connection_id, f.resource_type, f.external_id, f.spree_type, f.spree_id, f.external_version]) }.sort,
+          unresolved: unresolved.map { |f| JSON.generate([f.classification, f.resource_type, f.external_id]) }.sort
+        }
+        Digest::SHA256.hexdigest(JSON.generate(canonical))[0, 16]
       end
 
       def to_s

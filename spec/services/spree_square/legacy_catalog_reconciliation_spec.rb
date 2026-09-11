@@ -482,6 +482,60 @@ RSpec.describe SpreeSquare::LegacyCatalogReconciliation do
     end
   end
 
+  # The accidental-trigger guard. The migrate TASK refuses without the digest
+  # the dry run printed, and the Migrator refuses if the data no longer
+  # produces that digest, so a stale plan can never be applied.
+  describe 'the plan digest' do
+    it 'is a short, stable hex fingerprint for unchanged data' do
+      legacy_item('sq_item_1', product)
+      digest = described_class.analyze.plan_digest
+
+      expect(digest).to match(/\A\h{16}\z/)
+      expect(described_class.analyze.plan_digest).to eq(digest)
+    end
+
+    it 'changes when a new convertible row appears' do
+      legacy_item('sq_item_1', product)
+      before = described_class.analyze.plan_digest
+      legacy_item('sq_item_2', product('Second Dish'))
+
+      expect(described_class.analyze.plan_digest).not_to eq(before)
+    end
+
+    it 'changes when the unresolved set changes' do
+      pizza = product
+      legacy_item('sq_item_old', pizza)
+      before = described_class.analyze.plan_digest
+      legacy_item('sq_item_new', pizza)
+
+      expect(described_class.analyze.plan_digest).not_to eq(before)
+    end
+
+    it 'is printed in the mutation plan so the operator can copy it' do
+      legacy_item('sq_item_1', product)
+      report = described_class.analyze
+
+      expect(report.mutation_plan).to include("Plan digest: #{report.plan_digest}")
+    end
+
+    it 'lets the mutation proceed when the confirmed digest matches' do
+      legacy_item('sq_item_1', product)
+      digest = described_class.analyze.plan_digest
+
+      expect { described_class.migrate!(expected_plan_digest: digest) }.to change(SpreePos::ExternalRef, :count).by(1)
+    end
+
+    it 'REFUSES and writes nothing when the data changed after the reviewed dry run' do
+      legacy_item('sq_item_1', product)
+      digest = described_class.analyze.plan_digest
+      legacy_item('sq_item_2', product('Arrived After The Dry Run'))
+
+      expect { described_class.migrate!(expected_plan_digest: digest) }
+        .to raise_error(SpreeSquare::LegacyCatalogReconciliation::Migrator::InvariantViolation, /plan digest mismatch/)
+      expect(SpreePos::ExternalRef.count).to eq(0)
+    end
+  end
+
   describe 'the mutation' do
     it 'creates an ExternalRef for every convertible row, carrying the legacy version metadata' do
       pizza = product

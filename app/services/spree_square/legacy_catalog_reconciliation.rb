@@ -37,8 +37,9 @@ module SpreeSquare
       # REFUSES rather than mutating when a hard invariant fails, including
       # the default refusal on any row still needing human resolution.
       # `allow_unresolved:` lifts only that one check, and only on purpose.
-      def migrate!(connection: nil, allow_unresolved: false)
-        Migrator.new(connection: connection, allow_unresolved: allow_unresolved).call
+      def migrate!(connection: nil, allow_unresolved: false, expected_plan_digest: nil)
+        Migrator.new(connection: connection, allow_unresolved: allow_unresolved,
+                     expected_plan_digest: expected_plan_digest).call
       end
     end
   end

@@ -35,7 +35,8 @@ Gem::Specification.new do |s|
   # sync by hand.
   s.files = `git ls-files -z`.split("\x0").reject do |f|
     (f.start_with?('spec/') && !f.start_with?('spec/fixtures')) ||
-      f.start_with?('lib/tasks/demo_menu')
+      f.start_with?('lib/tasks/demo_menu') ||
+      File.basename(f).start_with?('.env') # test-only keys, see spec_helper
   end
   s.require_path = 'lib'
   s.requirements << 'none'
@@ -52,7 +53,10 @@ Gem::Specification.new do |s|
   # this gem needs SpreePos:: loaded at runtime. No version pin -- spree_pos
   # isn't published to RubyGems yet (path dependency only, see this repo's
   # own Gemfile) — do not tag or publish against this dependency yet.
-  s.add_dependency 'spree_pos'
+  # Bounded, not open-ended. 0.2 is the release that changed the webhook
+  # contract to extract_events and moved catalog mappings onto
+  # SpreePos::ExternalRef; this adapter requires both.
+  s.add_dependency 'spree_pos', '~> 0.2'
 
   # Square's official Ruby SDK. Current major (Fern-generated) uses
   # Square::Client.new(token:) / square.orders.create(...) — NOT the legacy
