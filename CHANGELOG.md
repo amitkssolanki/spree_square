@@ -2,6 +2,32 @@
 
 All notable changes to this project are documented here.
 
+## 2.0.1
+
+Fixes the catalog import that failed in production on 2026-09-11 and was rolled back (host repo:
+`docs/b2-cutover-incident-2026-09-11.md`).
+
+- `CatalogAdapter#item_dto` read `present_at_location_ids` from the nested `Square::Types::CatalogItem`.
+  square.rb 46.x declares it only on the outer catalog object, so the first real item raised
+  `NoMethodError`. It is now read from the outer object through `respond_to?`: the SDK defines an outer
+  key's accessor only once some payload has carried that key, and no item in the live catalog did, so
+  calling it directly would have raised too. An all-locations item (Square's default) now maps to
+  `nil`, "no restriction", rather than an empty list.
+- square.rb 46.x turns an explicit `false` on a declared field into `nil`, so a tax or modifier list
+  disabled in Square was imported as enabled. `SpreeSquare::SquareSdkFalseValues` restores the
+  payload's `false` on the `Catalog*` types this gem reads, and installs only while the SDK still drops
+  it. square.rb 46.1.0.20260819 is the newest release and still does.
+- Catalog specs now build real square.rb objects (`spec/support/square_catalog_objects.rb`, which
+  refuses any key the SDK does not declare for that type) and use a fixture derived from a live 46.1
+  response. The doubles they replace answered any method, which is how the defect passed every spec.
+
+Specs run against square.rb 46.1.0.20260819, the version production resolves.
+
+## 2.0.0
+
+Square as a registered `spree_pos` provider on `SpreePos::ExternalRef`, and the B2 reconciliation with a
+plan-digest-confirmed mutation. Requires `spree_pos ~> 0.2`.
+
 ## 0.2.5
 
 Extends the `v0.2.2`-`v0.2.4` tax fix to the delivery fee, so a delivery order's Square receipt fully

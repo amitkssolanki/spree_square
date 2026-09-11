@@ -34,10 +34,11 @@ module SpreeSquare
     # Deliberately NOT declared, though Square's API does support them and
     # the plan's own capability matrix (section 9.1) lists them as Square
     # features: :catalog_location_availability and
-    # :catalog_location_pricing. SpreeSquare::CatalogAdapter ignores
-    # `present_at_location_ids` and `location_overrides` entirely (plan
-    # Q3/Q7, both settled as out of scope), so claiming them here would
-    # tell a future caller something untrue about what this adapter does.
+    # :catalog_location_pricing. SpreeSquare::CatalogAdapter records an
+    # item's `present_at_location_ids` on its DTO but nothing honours it, and
+    # it ignores `location_overrides` entirely (plan Q3/Q7, both settled as
+    # out of scope), so claiming them here would tell a future caller
+    # something untrue about what this adapter does.
     def self.capabilities
       @capabilities ||= Set[
         # mandatory

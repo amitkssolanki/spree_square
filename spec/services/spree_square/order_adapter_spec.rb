@@ -146,9 +146,7 @@ RSpec.describe SpreeSquare::OrderAdapter do
     let(:mapper) { SpreeSquare::CatalogObjectMapper.new }
 
     def square_object(id:, type:, version: 1, **data_by_key)
-      data_key = "#{type.downcase}_data"
-      double("Square::Types::CatalogObject(#{type})", id: id, type: type, version: version,
-                                                        **{ data_key.to_sym => OpenStruct.new(data_by_key[data_key.to_sym] || {}) })
+      square_catalog_object(id: id, type: type, version: version, **data_by_key)
     end
 
     let(:tax_category) do
@@ -284,9 +282,7 @@ RSpec.describe SpreeSquare::OrderAdapter do
       end
 
       def square_object(id:, type:, version: 1, **data_by_key)
-        data_key = "#{type.downcase}_data"
-        double("Square::Types::CatalogObject(#{type})", id: id, type: type, version: version,
-                                                          **{ data_key.to_sym => OpenStruct.new(data_by_key[data_key.to_sym] || {}) })
+        square_catalog_object(id: id, type: type, version: version, **data_by_key)
       end
 
       let(:delivery_tax_category) do

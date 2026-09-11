@@ -14,18 +14,9 @@ RSpec.describe 'SpreeSquare::CatalogObjectMapper tax handling (Phase 8)' do
                                   catalog_role: 'source')
   end
 
-  # Mirrors catalog_object_mapper_spec.rb's own `square_object` helper
-  # exactly (see its comment for why this is a plain double, not
-  # instance_double).
+  # Real square.rb objects, as in catalog_object_mapper_spec.rb.
   def square_object(id:, type:, version: 1, **data_by_key)
-    data_key = "#{type.downcase}_data"
-    double(
-      "Square::Types::CatalogObject(#{type})",
-      id: id,
-      type: type,
-      version: version,
-      **{ data_key.to_sym => OpenStruct.new(data_by_key[data_key.to_sym] || {}) }
-    )
+    square_catalog_object(id: id, type: type, version: version, **data_by_key)
   end
 
   def tax_object(id:, name:, percentage:, version: 1, enabled: true, inclusion_type: 'ADDITIVE')

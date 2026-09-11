@@ -21,43 +21,22 @@ RSpec.describe SpreeSquare::CatalogImporter do
     JSON.parse(File.read(FIXTURE_PATH))['objects']
   end
 
-  # A minimal stand-in for the Fern SDK's typed CatalogObject. B3: the
-  # importer now converts each object to a DTO before handing it on, so
-  # these doubles need the `<type>_data` payload the adapter's DTO
-  # builders read (they did not before, when the raw object was passed
-  # straight through). See catalog_object_mapper_spec for why a plain
-  # double (not instance_double) is deliberate here too.
-  DATA_KEY = {
-    'CATEGORY' => :category_data, 'MODIFIER_LIST' => :modifier_list_data,
-    'TAX' => :tax_data, 'ITEM' => :item_data, 'IMAGE' => :image_data
-  }.freeze
-
+  # REAL square.rb objects, loaded through the SDK's own union coercion from
+  # the fixture's JSON. These used to be doubles over OpenStruct payloads,
+  # one of which gave the item payload a `present_at_location_ids` Square
+  # never puts there. A double answers any method, so this spec passed while
+  # the first real import in production raised (2026-09-11,
+  # docs/b2-cutover-incident-2026-09-11.md in the host repo).
   def square_object(raw)
-    attrs = { id: raw['id'], type: raw['type'], version: raw['version'] }
-    key = DATA_KEY[raw['type']]
-    attrs[key] = OpenStruct.new(payload_for(raw['type'])) if key
-    double("Square::Types::CatalogObject(#{raw['type']})", **attrs)
-  end
-
-  # Just enough of each `<type>_data` shape for the adapter's DTO builders;
-  # the values themselves are irrelevant to what this spec asserts.
-  def payload_for(type)
-    case type
-    when 'CATEGORY'      then { name: 'Cat' }
-    when 'MODIFIER_LIST' then { name: 'List', selection_type: 'SINGLE', min_selected_modifiers: nil,
-                                max_selected_modifiers: nil, modifiers: [] }
-    when 'TAX'           then { name: 'Tax', percentage: '8.0', inclusion_type: 'ADDITIVE', enabled: true }
-    when 'ITEM'          then { name: 'Item', description: nil, image_ids: [], category_id: nil, categories: [],
-                                tax_ids: [], modifier_list_info: [], variations: [], present_at_location_ids: [] }
-    else {}
-    end
+    Square::Types::CatalogObject.coerce(JSON.parse(raw.to_json, symbolize_names: true))
   end
 
   def search_response(objects:, related: [], cursor: nil)
-    double('Square::Types::SearchCatalogObjectsResponse',
-           objects: objects.map { |o| square_object(o) },
-           related_objects: related.map { |o| square_object(o) },
-           cursor: cursor)
+    Square::Types::SearchCatalogObjectsResponse.coerce(
+      { objects: objects.map { |o| square_object(o) },
+        related_objects: related.map { |o| square_object(o) },
+        cursor: cursor }
+    )
   end
 
   let(:raw) { fixture_objects.group_by { |o| o['type'] } }

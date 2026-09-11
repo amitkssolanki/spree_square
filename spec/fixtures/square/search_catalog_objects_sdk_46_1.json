@@ -1,0 +1,880 @@
+{
+  "objects": [
+    {
+      "item_data": {
+        "name": "Fixture item_data 1",
+        "description": "Fixture description.",
+        "is_taxable": true,
+        "tax_ids": [
+          "FXTAX0000000000000000001"
+        ],
+        "modifier_list_info": [
+          {
+            "modifier_list_id": "FXMDL0000000000000000001",
+            "min_selected_modifiers": 1,
+            "max_selected_modifiers": 1,
+            "enabled": true,
+            "allow_quantities": "NOT_SET",
+            "is_conversational": "NOT_SET",
+            "hidden_from_customer_override": "NOT_SET"
+          },
+          {
+            "modifier_list_id": "FXMDL0000000000000000002",
+            "min_selected_modifiers": 1,
+            "max_selected_modifiers": 1,
+            "enabled": true,
+            "allow_quantities": "NOT_SET",
+            "is_conversational": "NOT_SET",
+            "hidden_from_customer_override": "NOT_SET"
+          }
+        ],
+        "variations": [
+          {
+            "item_variation_data": {
+              "item_id": "FXITM0000000000000000001",
+              "name": "Fixture item_variation_data 1",
+              "ordinal": 0,
+              "pricing_type": "FIXED_PRICING",
+              "price_money": {
+                "amount": 1699,
+                "currency": "USD"
+              },
+              "sellable": true,
+              "stockable": true
+            },
+            "type": "ITEM_VARIATION",
+            "id": "FXVAR0000000000000000001",
+            "updated_at": "2026-09-11T00:00:00.000Z",
+            "created_at": "2026-09-11T00:00:00.000Z",
+            "version": 1700000000005,
+            "is_deleted": false,
+            "present_at_all_locations": true
+          }
+        ],
+        "product_type": "REGULAR",
+        "image_ids": [
+          "FXIMG0000000000000000001"
+        ],
+        "categories": [
+          {
+            "id": "FXCAT0000000000000000001",
+            "ordinal": -2251799713021952
+          }
+        ],
+        "description_html": "<p>Fixture description.</p>",
+        "description_plaintext": "Fixture description."
+      },
+      "type": "ITEM",
+      "id": "FXITM0000000000000000001",
+      "updated_at": "2026-09-11T00:00:00.000Z",
+      "created_at": "2026-09-11T00:00:00.000Z",
+      "version": 1700000000007,
+      "is_deleted": false,
+      "present_at_all_locations": true
+    },
+    {
+      "item_data": {
+        "name": "Fixture item_data 2",
+        "description": "Fixture description.",
+        "is_taxable": true,
+        "tax_ids": [
+          "FXTAX0000000000000000001"
+        ],
+        "modifier_list_info": [
+          {
+            "modifier_list_id": "FXMDL0000000000000000003",
+            "min_selected_modifiers": 0,
+            "max_selected_modifiers": 5,
+            "enabled": true,
+            "allow_quantities": "NOT_SET",
+            "is_conversational": "NOT_SET",
+            "hidden_from_customer_override": "NOT_SET"
+          },
+          {
+            "modifier_list_id": "FXMDL0000000000000000004",
+            "min_selected_modifiers": 1,
+            "max_selected_modifiers": 1,
+            "enabled": true,
+            "allow_quantities": "NOT_SET",
+            "is_conversational": "NOT_SET",
+            "hidden_from_customer_override": "NOT_SET"
+          },
+          {
+            "modifier_list_id": "FXMDL0000000000000000005",
+            "min_selected_modifiers": 1,
+            "max_selected_modifiers": 1,
+            "enabled": true,
+            "allow_quantities": "NOT_SET",
+            "is_conversational": "NOT_SET",
+            "hidden_from_customer_override": "NOT_SET"
+          }
+        ],
+        "variations": [
+          {
+            "item_variation_data": {
+              "item_id": "FXITM0000000000000000002",
+              "name": "Fixture item_variation_data 2",
+              "ordinal": 0,
+              "pricing_type": "FIXED_PRICING",
+              "price_money": {
+                "amount": 1199,
+                "currency": "USD"
+              },
+              "sellable": true,
+              "stockable": true
+            },
+            "type": "ITEM_VARIATION",
+            "id": "FXVAR0000000000000000002",
+            "updated_at": "2026-09-11T00:00:00.000Z",
+            "created_at": "2026-09-11T00:00:00.000Z",
+            "version": 1700000000012,
+            "is_deleted": false,
+            "present_at_all_locations": true
+          }
+        ],
+        "product_type": "REGULAR",
+        "image_ids": [
+          "FXIMG0000000000000000002"
+        ],
+        "categories": [
+          {
+            "id": "FXCAT0000000000000000002",
+            "ordinal": -2251799713021952
+          }
+        ],
+        "description_html": "<p>Fixture description.</p>",
+        "description_plaintext": "Fixture description."
+      },
+      "type": "ITEM",
+      "id": "FXITM0000000000000000002",
+      "updated_at": "2026-09-11T00:00:00.000Z",
+      "created_at": "2026-09-11T00:00:00.000Z",
+      "version": 1700000000014,
+      "is_deleted": false,
+      "present_at_all_locations": true
+    },
+    {
+      "item_data": {
+        "name": "Fixture item_data 3",
+        "description": "Fixture description.",
+        "is_taxable": true,
+        "tax_ids": [
+          "FXTAX0000000000000000001"
+        ],
+        "variations": [
+          {
+            "item_variation_data": {
+              "item_id": "FXITM0000000000000000003",
+              "name": "Fixture item_variation_data 3",
+              "ordinal": 0,
+              "pricing_type": "FIXED_PRICING",
+              "price_money": {
+                "amount": 999,
+                "currency": "USD"
+              },
+              "sellable": true,
+              "stockable": true
+            },
+            "type": "ITEM_VARIATION",
+            "id": "FXVAR0000000000000000003",
+            "updated_at": "2026-09-11T00:00:00.000Z",
+            "created_at": "2026-09-11T00:00:00.000Z",
+            "version": 1700000000016,
+            "is_deleted": false,
+            "present_at_all_locations": true
+          }
+        ],
+        "product_type": "REGULAR",
+        "image_ids": [
+          "FXIMG0000000000000000003"
+        ],
+        "categories": [
+          {
+            "id": "FXCAT0000000000000000003",
+            "ordinal": -2251799796908032
+          }
+        ],
+        "description_html": "<p>Fixture description.</p>",
+        "description_plaintext": "Fixture description."
+      },
+      "type": "ITEM",
+      "id": "FXITM0000000000000000003",
+      "updated_at": "2026-09-11T00:00:00.000Z",
+      "created_at": "2026-09-11T00:00:00.000Z",
+      "version": 1700000000018,
+      "is_deleted": false,
+      "present_at_all_locations": true
+    },
+    {
+      "id": "FXCAT0000000000000000003",
+      "type": "CATEGORY",
+      "category_data": {
+        "name": "Fixture category_data 1",
+        "category_type": "REGULAR_CATEGORY",
+        "parent_category": {
+          "ordinal": -2251799796908032
+        },
+        "is_top_level": true,
+        "online_visibility": true
+      },
+      "updated_at": "2026-09-11T00:00:00.000Z",
+      "version": 1700000000018,
+      "present_at_all_locations": true,
+      "created_at": "2026-09-11T00:00:00.000Z"
+    },
+    {
+      "id": "FXCAT0000000000000000001",
+      "type": "CATEGORY",
+      "category_data": {
+        "name": "Fixture category_data 2",
+        "category_type": "REGULAR_CATEGORY",
+        "parent_category": {
+          "ordinal": -2251799746576384
+        },
+        "is_top_level": true,
+        "online_visibility": true
+      },
+      "updated_at": "2026-09-11T00:00:00.000Z",
+      "version": 1700000000018,
+      "present_at_all_locations": true,
+      "created_at": "2026-09-11T00:00:00.000Z"
+    },
+    {
+      "id": "FXCAT0000000000000000002",
+      "type": "CATEGORY",
+      "category_data": {
+        "name": "Fixture category_data 3",
+        "category_type": "REGULAR_CATEGORY",
+        "parent_category": {
+          "ordinal": -2251799729799168
+        },
+        "is_top_level": true,
+        "online_visibility": true
+      },
+      "updated_at": "2026-09-11T00:00:00.000Z",
+      "version": 1700000000018,
+      "present_at_all_locations": true,
+      "created_at": "2026-09-11T00:00:00.000Z"
+    },
+    {
+      "tax_data": {
+        "name": "Fixture tax_data 1",
+        "calculation_phase": "TAX_SUBTOTAL_PHASE",
+        "inclusion_type": "ADDITIVE",
+        "percentage": "8.0",
+        "applies_to_custom_amounts": true,
+        "enabled": true
+      },
+      "type": "TAX",
+      "id": "FXTAX0000000000000000001",
+      "updated_at": "2026-09-11T00:00:00.000Z",
+      "created_at": "2026-09-11T00:00:00.000Z",
+      "version": 1700000000018,
+      "is_deleted": false,
+      "present_at_all_locations": true
+    },
+    {
+      "modifier_list_data": {
+        "name": "Fixture modifier_list_data 1",
+        "ordinal": 1,
+        "selection_type": "SINGLE",
+        "modifiers": [
+          {
+            "modifier_data": {
+              "name": "Fixture modifier_data 1",
+              "price_money": {
+                "amount": 0,
+                "currency": "USD"
+              },
+              "ordinal": 0,
+              "modifier_list_id": "FXMDL0000000000000000001"
+            },
+            "type": "MODIFIER",
+            "id": "FXMOD0000000000000000001",
+            "updated_at": "2026-09-11T00:00:00.000Z",
+            "created_at": "2026-09-11T00:00:00.000Z",
+            "version": 1700000000019,
+            "is_deleted": false,
+            "present_at_all_locations": true
+          },
+          {
+            "modifier_data": {
+              "name": "Fixture modifier_data 2",
+              "price_money": {
+                "amount": 0,
+                "currency": "USD"
+              },
+              "ordinal": 1,
+              "modifier_list_id": "FXMDL0000000000000000001"
+            },
+            "type": "MODIFIER",
+            "id": "FXMOD0000000000000000002",
+            "updated_at": "2026-09-11T00:00:00.000Z",
+            "created_at": "2026-09-11T00:00:00.000Z",
+            "version": 1700000000020,
+            "is_deleted": false,
+            "present_at_all_locations": true
+          },
+          {
+            "modifier_data": {
+              "name": "Fixture modifier_data 3",
+              "price_money": {
+                "amount": 0,
+                "currency": "USD"
+              },
+              "ordinal": 2,
+              "modifier_list_id": "FXMDL0000000000000000001"
+            },
+            "type": "MODIFIER",
+            "id": "FXMOD0000000000000000003",
+            "updated_at": "2026-09-11T00:00:00.000Z",
+            "created_at": "2026-09-11T00:00:00.000Z",
+            "version": 1700000000021,
+            "is_deleted": false,
+            "present_at_all_locations": true
+          },
+          {
+            "modifier_data": {
+              "name": "Fixture modifier_data 4",
+              "price_money": {
+                "amount": 100,
+                "currency": "USD"
+              },
+              "ordinal": 3,
+              "modifier_list_id": "FXMDL0000000000000000001"
+            },
+            "type": "MODIFIER",
+            "id": "FXMOD0000000000000000004",
+            "updated_at": "2026-09-11T00:00:00.000Z",
+            "created_at": "2026-09-11T00:00:00.000Z",
+            "version": 1700000000022,
+            "is_deleted": false,
+            "present_at_all_locations": true
+          },
+          {
+            "modifier_data": {
+              "name": "Fixture modifier_data 5",
+              "price_money": {
+                "amount": 200,
+                "currency": "USD"
+              },
+              "ordinal": 4,
+              "modifier_list_id": "FXMDL0000000000000000001"
+            },
+            "type": "MODIFIER",
+            "id": "FXMOD0000000000000000005",
+            "updated_at": "2026-09-11T00:00:00.000Z",
+            "created_at": "2026-09-11T00:00:00.000Z",
+            "version": 1700000000023,
+            "is_deleted": false,
+            "present_at_all_locations": true
+          }
+        ],
+        "modifier_type": "LIST",
+        "min_selected_modifiers": 1,
+        "max_selected_modifiers": 1
+      },
+      "type": "MODIFIER_LIST",
+      "id": "FXMDL0000000000000000001",
+      "updated_at": "2026-09-11T00:00:00.000Z",
+      "created_at": "2026-09-11T00:00:00.000Z",
+      "version": 1700000000023,
+      "is_deleted": false,
+      "present_at_all_locations": true
+    },
+    {
+      "modifier_list_data": {
+        "name": "Fixture modifier_list_data 2",
+        "ordinal": 2,
+        "selection_type": "SINGLE",
+        "modifiers": [
+          {
+            "modifier_data": {
+              "name": "Fixture modifier_data 6",
+              "price_money": {
+                "amount": 0,
+                "currency": "USD"
+              },
+              "ordinal": 0,
+              "modifier_list_id": "FXMDL0000000000000000002"
+            },
+            "type": "MODIFIER",
+            "id": "FXMOD0000000000000000006",
+            "updated_at": "2026-09-11T00:00:00.000Z",
+            "created_at": "2026-09-11T00:00:00.000Z",
+            "version": 1700000000024,
+            "is_deleted": false,
+            "present_at_all_locations": true
+          },
+          {
+            "modifier_data": {
+              "name": "Fixture modifier_data 7",
+              "price_money": {
+                "amount": 0,
+                "currency": "USD"
+              },
+              "ordinal": 1,
+              "modifier_list_id": "FXMDL0000000000000000002"
+            },
+            "type": "MODIFIER",
+            "id": "FXMOD0000000000000000007",
+            "updated_at": "2026-09-11T00:00:00.000Z",
+            "created_at": "2026-09-11T00:00:00.000Z",
+            "version": 1700000000025,
+            "is_deleted": false,
+            "present_at_all_locations": true
+          },
+          {
+            "modifier_data": {
+              "name": "Fixture modifier_data 8",
+              "price_money": {
+                "amount": 0,
+                "currency": "USD"
+              },
+              "ordinal": 2,
+              "modifier_list_id": "FXMDL0000000000000000002"
+            },
+            "type": "MODIFIER",
+            "id": "FXMOD0000000000000000008",
+            "updated_at": "2026-09-11T00:00:00.000Z",
+            "created_at": "2026-09-11T00:00:00.000Z",
+            "version": 1700000000026,
+            "is_deleted": false,
+            "present_at_all_locations": true
+          },
+          {
+            "modifier_data": {
+              "name": "Fixture modifier_data 9",
+              "price_money": {
+                "amount": 100,
+                "currency": "USD"
+              },
+              "ordinal": 3,
+              "modifier_list_id": "FXMDL0000000000000000002"
+            },
+            "type": "MODIFIER",
+            "id": "FXMOD0000000000000000009",
+            "updated_at": "2026-09-11T00:00:00.000Z",
+            "created_at": "2026-09-11T00:00:00.000Z",
+            "version": 1700000000027,
+            "is_deleted": false,
+            "present_at_all_locations": true
+          },
+          {
+            "modifier_data": {
+              "name": "Fixture modifier_data 10",
+              "price_money": {
+                "amount": 200,
+                "currency": "USD"
+              },
+              "ordinal": 4,
+              "modifier_list_id": "FXMDL0000000000000000002"
+            },
+            "type": "MODIFIER",
+            "id": "FXMOD0000000000000000010",
+            "updated_at": "2026-09-11T00:00:00.000Z",
+            "created_at": "2026-09-11T00:00:00.000Z",
+            "version": 1700000000028,
+            "is_deleted": false,
+            "present_at_all_locations": true
+          }
+        ],
+        "modifier_type": "LIST",
+        "min_selected_modifiers": 1,
+        "max_selected_modifiers": 1
+      },
+      "type": "MODIFIER_LIST",
+      "id": "FXMDL0000000000000000002",
+      "updated_at": "2026-09-11T00:00:00.000Z",
+      "created_at": "2026-09-11T00:00:00.000Z",
+      "version": 1700000000028,
+      "is_deleted": false,
+      "present_at_all_locations": true
+    },
+    {
+      "modifier_list_data": {
+        "name": "Fixture modifier_list_data 3",
+        "ordinal": 3,
+        "selection_type": "SINGLE",
+        "modifiers": [
+          {
+            "modifier_data": {
+              "name": "Fixture modifier_data 11",
+              "price_money": {
+                "amount": 0,
+                "currency": "USD"
+              },
+              "ordinal": 0,
+              "modifier_list_id": "FXMDL0000000000000000005"
+            },
+            "type": "MODIFIER",
+            "id": "FXMOD0000000000000000011",
+            "updated_at": "2026-09-11T00:00:00.000Z",
+            "created_at": "2026-09-11T00:00:00.000Z",
+            "version": 1700000000029,
+            "is_deleted": false,
+            "present_at_all_locations": true
+          },
+          {
+            "modifier_data": {
+              "name": "Fixture modifier_data 12",
+              "price_money": {
+                "amount": 100,
+                "currency": "USD"
+              },
+              "ordinal": 1,
+              "modifier_list_id": "FXMDL0000000000000000005"
+            },
+            "type": "MODIFIER",
+            "id": "FXMOD0000000000000000012",
+            "updated_at": "2026-09-11T00:00:00.000Z",
+            "created_at": "2026-09-11T00:00:00.000Z",
+            "version": 1700000000030,
+            "is_deleted": false,
+            "present_at_all_locations": true
+          },
+          {
+            "modifier_data": {
+              "name": "Fixture modifier_data 13",
+              "price_money": {
+                "amount": 0,
+                "currency": "USD"
+              },
+              "ordinal": 2,
+              "modifier_list_id": "FXMDL0000000000000000005"
+            },
+            "type": "MODIFIER",
+            "id": "FXMOD0000000000000000013",
+            "updated_at": "2026-09-11T00:00:00.000Z",
+            "created_at": "2026-09-11T00:00:00.000Z",
+            "version": 1700000000031,
+            "is_deleted": false,
+            "present_at_all_locations": true
+          }
+        ],
+        "modifier_type": "LIST",
+        "min_selected_modifiers": 1,
+        "max_selected_modifiers": 1
+      },
+      "type": "MODIFIER_LIST",
+      "id": "FXMDL0000000000000000005",
+      "updated_at": "2026-09-11T00:00:00.000Z",
+      "created_at": "2026-09-11T00:00:00.000Z",
+      "version": 1700000000031,
+      "is_deleted": false,
+      "present_at_all_locations": true
+    },
+    {
+      "modifier_list_data": {
+        "name": "Fixture modifier_list_data 4",
+        "ordinal": 4,
+        "selection_type": "SINGLE",
+        "modifiers": [
+          {
+            "modifier_data": {
+              "name": "Fixture modifier_data 14",
+              "price_money": {
+                "amount": 300,
+                "currency": "USD"
+              },
+              "ordinal": 0,
+              "modifier_list_id": "FXMDL0000000000000000004"
+            },
+            "type": "MODIFIER",
+            "id": "FXMOD0000000000000000014",
+            "updated_at": "2026-09-11T00:00:00.000Z",
+            "created_at": "2026-09-11T00:00:00.000Z",
+            "version": 1700000000032,
+            "is_deleted": false,
+            "present_at_all_locations": true
+          },
+          {
+            "modifier_data": {
+              "name": "Fixture modifier_data 15",
+              "price_money": {
+                "amount": 400,
+                "currency": "USD"
+              },
+              "ordinal": 1,
+              "modifier_list_id": "FXMDL0000000000000000004"
+            },
+            "type": "MODIFIER",
+            "id": "FXMOD0000000000000000015",
+            "updated_at": "2026-09-11T00:00:00.000Z",
+            "created_at": "2026-09-11T00:00:00.000Z",
+            "version": 1700000000033,
+            "is_deleted": false,
+            "present_at_all_locations": true
+          },
+          {
+            "modifier_data": {
+              "name": "Fixture modifier_data 16",
+              "price_money": {
+                "amount": 200,
+                "currency": "USD"
+              },
+              "ordinal": 2,
+              "modifier_list_id": "FXMDL0000000000000000004"
+            },
+            "type": "MODIFIER",
+            "id": "FXMOD0000000000000000016",
+            "updated_at": "2026-09-11T00:00:00.000Z",
+            "created_at": "2026-09-11T00:00:00.000Z",
+            "version": 1700000000034,
+            "is_deleted": false,
+            "present_at_all_locations": true
+          },
+          {
+            "modifier_data": {
+              "name": "Fixture modifier_data 17",
+              "price_money": {
+                "amount": 400,
+                "currency": "USD"
+              },
+              "ordinal": 3,
+              "modifier_list_id": "FXMDL0000000000000000004"
+            },
+            "type": "MODIFIER",
+            "id": "FXMOD0000000000000000017",
+            "updated_at": "2026-09-11T00:00:00.000Z",
+            "created_at": "2026-09-11T00:00:00.000Z",
+            "version": 1700000000035,
+            "is_deleted": false,
+            "present_at_all_locations": true
+          }
+        ],
+        "modifier_type": "LIST",
+        "min_selected_modifiers": 1,
+        "max_selected_modifiers": 1
+      },
+      "type": "MODIFIER_LIST",
+      "id": "FXMDL0000000000000000004",
+      "updated_at": "2026-09-11T00:00:00.000Z",
+      "created_at": "2026-09-11T00:00:00.000Z",
+      "version": 1700000000035,
+      "is_deleted": false,
+      "present_at_all_locations": true
+    },
+    {
+      "modifier_list_data": {
+        "name": "Fixture modifier_list_data 5",
+        "ordinal": 5,
+        "selection_type": "MULTIPLE",
+        "modifiers": [
+          {
+            "modifier_data": {
+              "name": "Fixture modifier_data 18",
+              "price_money": {
+                "amount": 75,
+                "currency": "USD"
+              },
+              "ordinal": 0,
+              "modifier_list_id": "FXMDL0000000000000000003"
+            },
+            "type": "MODIFIER",
+            "id": "FXMOD0000000000000000018",
+            "updated_at": "2026-09-11T00:00:00.000Z",
+            "created_at": "2026-09-11T00:00:00.000Z",
+            "version": 1700000000036,
+            "is_deleted": false,
+            "present_at_all_locations": true
+          },
+          {
+            "modifier_data": {
+              "name": "Fixture modifier_data 19",
+              "price_money": {
+                "amount": 75,
+                "currency": "USD"
+              },
+              "ordinal": 1,
+              "modifier_list_id": "FXMDL0000000000000000003"
+            },
+            "type": "MODIFIER",
+            "id": "FXMOD0000000000000000019",
+            "updated_at": "2026-09-11T00:00:00.000Z",
+            "created_at": "2026-09-11T00:00:00.000Z",
+            "version": 1700000000037,
+            "is_deleted": false,
+            "present_at_all_locations": true
+          },
+          {
+            "modifier_data": {
+              "name": "Fixture modifier_data 20",
+              "price_money": {
+                "amount": 100,
+                "currency": "USD"
+              },
+              "ordinal": 2,
+              "modifier_list_id": "FXMDL0000000000000000003"
+            },
+            "type": "MODIFIER",
+            "id": "FXMOD0000000000000000020",
+            "updated_at": "2026-09-11T00:00:00.000Z",
+            "created_at": "2026-09-11T00:00:00.000Z",
+            "version": 1700000000038,
+            "is_deleted": false,
+            "present_at_all_locations": true
+          },
+          {
+            "modifier_data": {
+              "name": "Fixture modifier_data 21",
+              "price_money": {
+                "amount": 150,
+                "currency": "USD"
+              },
+              "ordinal": 3,
+              "modifier_list_id": "FXMDL0000000000000000003"
+            },
+            "type": "MODIFIER",
+            "id": "FXMOD0000000000000000021",
+            "updated_at": "2026-09-11T00:00:00.000Z",
+            "created_at": "2026-09-11T00:00:00.000Z",
+            "version": 1700000000039,
+            "is_deleted": false,
+            "present_at_all_locations": true
+          },
+          {
+            "modifier_data": {
+              "name": "Fixture modifier_data 22",
+              "price_money": {
+                "amount": 75,
+                "currency": "USD"
+              },
+              "ordinal": 4,
+              "modifier_list_id": "FXMDL0000000000000000003"
+            },
+            "type": "MODIFIER",
+            "id": "FXMOD0000000000000000022",
+            "updated_at": "2026-09-11T00:00:00.000Z",
+            "created_at": "2026-09-11T00:00:00.000Z",
+            "version": 1700000000040,
+            "is_deleted": false,
+            "present_at_all_locations": true
+          },
+          {
+            "modifier_data": {
+              "name": "Fixture modifier_data 23",
+              "price_money": {
+                "amount": 75,
+                "currency": "USD"
+              },
+              "ordinal": 5,
+              "modifier_list_id": "FXMDL0000000000000000003"
+            },
+            "type": "MODIFIER",
+            "id": "FXMOD0000000000000000023",
+            "updated_at": "2026-09-11T00:00:00.000Z",
+            "created_at": "2026-09-11T00:00:00.000Z",
+            "version": 1700000000041,
+            "is_deleted": false,
+            "present_at_all_locations": true
+          }
+        ],
+        "modifier_type": "LIST"
+      },
+      "type": "MODIFIER_LIST",
+      "id": "FXMDL0000000000000000003",
+      "updated_at": "2026-09-11T00:00:00.000Z",
+      "created_at": "2026-09-11T00:00:00.000Z",
+      "version": 1700000000041,
+      "is_deleted": false,
+      "present_at_all_locations": true
+    },
+    {
+      "item_data": {
+        "name": "Fixture restricted item",
+        "description": "Fixture description.",
+        "is_taxable": true,
+        "tax_ids": [
+          "FXTAX0000000000000000001"
+        ],
+        "variations": [
+          {
+            "item_variation_data": {
+              "item_id": "FXITM9999999999999999999",
+              "name": "Fixture item_variation_data 3",
+              "ordinal": 0,
+              "pricing_type": "FIXED_PRICING",
+              "price_money": {
+                "amount": 999,
+                "currency": "USD"
+              },
+              "sellable": true,
+              "stockable": true
+            },
+            "type": "ITEM_VARIATION",
+            "id": "FXVAR9999999999999999990",
+            "updated_at": "2026-09-11T00:00:00.000Z",
+            "created_at": "2026-09-11T00:00:00.000Z",
+            "version": 1700000000016,
+            "is_deleted": false,
+            "present_at_all_locations": true
+          }
+        ],
+        "product_type": "REGULAR",
+        "image_ids": [
+          "FXIMG0000000000000000003"
+        ],
+        "categories": [
+          {
+            "id": "FXCAT0000000000000000003",
+            "ordinal": -2251799796908032
+          }
+        ],
+        "description_html": "<p>Fixture description.</p>",
+        "description_plaintext": "Fixture description."
+      },
+      "type": "ITEM",
+      "id": "FXITM9999999999999999999",
+      "updated_at": "2026-09-11T00:00:00.000Z",
+      "created_at": "2026-09-11T00:00:00.000Z",
+      "version": 1700000000018,
+      "is_deleted": false,
+      "present_at_all_locations": false,
+      "present_at_location_ids": [
+        "FXLOC00000000000000001"
+      ]
+    }
+  ],
+  "related_objects": [
+    {
+      "image_data": {
+        "name": "Fixture image_data 1",
+        "url": "https://example.test/catalog-images/image.jpeg"
+      },
+      "type": "IMAGE",
+      "id": "FXIMG0000000000000000001",
+      "updated_at": "2026-09-11T00:00:00.000Z",
+      "created_at": "2026-09-11T00:00:00.000Z",
+      "version": 1700000000041,
+      "is_deleted": false,
+      "present_at_all_locations": true
+    },
+    {
+      "image_data": {
+        "name": "Fixture image_data 2",
+        "url": "https://example.test/catalog-images/image.jpeg"
+      },
+      "type": "IMAGE",
+      "id": "FXIMG0000000000000000003",
+      "updated_at": "2026-09-11T00:00:00.000Z",
+      "created_at": "2026-09-11T00:00:00.000Z",
+      "version": 1700000000041,
+      "is_deleted": false,
+      "present_at_all_locations": true
+    },
+    {
+      "image_data": {
+        "name": "Fixture image_data 3",
+        "url": "https://example.test/catalog-images/image.jpeg"
+      },
+      "type": "IMAGE",
+      "id": "FXIMG0000000000000000002",
+      "updated_at": "2026-09-11T00:00:00.000Z",
+      "created_at": "2026-09-11T00:00:00.000Z",
+      "version": 1700000000041,
+      "is_deleted": false,
+      "present_at_all_locations": true
+    }
+  ]
+}

@@ -28,7 +28,13 @@ names/structures Square's own docs show for that object type. No field or shape 
 | `webhooks/inventory_count_updated.json` | Verbatim example payload for `inventory.count.updated`. |
 | `webhooks/order_updated.json` | Verbatim example payload for `order.updated`. |
 | `webhooks/order_fulfillment_updated.json` | Verbatim example payload for `order.fulfillment.updated`. |
+| `search_catalog_objects_sdk_46_1.json` | **Derived from a live response.** Captured read-only on 2026-09-11 from the production merchant's Square account (sandbox environment) with square.rb 46.1.0.20260819, after the 2026-09-11 production import failure. A subset (three real items with their variations, the categories, tax and modifier lists they reference, and their images), sanitized: every id, name, description, image URL, timestamp and version is replaced; every key, nesting and value type is exactly as Square sent it. One item is a **derived** copy of a real one with `present_at_all_locations: false` and a `present_at_location_ids` list, both declared on `CatalogObjectBase` in the SDK, because no live item was location-restricted. The raw capture is not committed. |
 
 **If a live sandbox capture becomes possible** (e.g. by running `bin/rails runner` by hand, outside
 this harness), replace these with the real output and update this table to say so — these are a
 faithful stand-in per the plan's own fallback clause, not a permanent substitute.
+
+A live capture did become possible on 2026-09-11 (a read-only `kamal app exec` against production, no
+database writes, no token refresh), which is where `search_catalog_objects_sdk_46_1.json` comes from.
+Specs load it through the SDK's own types rather than doubles; see
+`spec/support/square_catalog_objects.rb`.

@@ -219,7 +219,7 @@ module SpreeSquare
         tax_external_ids: Array(data.tax_ids),
         modifier_group_external_ids: modifier_group_ids,
         variations: Array(data.variations).map { |v| variation_dto(v) },
-        available_at_external_location_ids: Array(data.present_at_location_ids),
+        available_at_external_location_ids: available_location_ids(square_object),
         external_version: square_object.version
       )
     end
@@ -234,6 +234,37 @@ module SpreeSquare
         currency: data.price_money&.currency,
         external_version: square_object.version
       )
+    end
+
+    private
+
+    # Square's location availability lives on the OUTER catalog object
+    # (CatalogObjectBase#present_at_all_locations / #present_at_location_ids
+    # in square.rb 46.x), never on the nested CatalogItem. Reading it from
+    # `item_data` raised NoMethodError on the first real item in production
+    # on 2026-09-11 (docs/b2-cutover-incident-2026-09-11.md in the host
+    # repo), after passing every fake-object spec.
+    #
+    # nil means "no restriction". Square defaults `present_at_all_locations`
+    # to true when it is omitted, and an all-locations object must not read
+    # as available nowhere. Exclusions via `absent_at_location_ids` are not
+    # modelled: Square does not declare :catalog_location_availability, so
+    # nothing consumes this field yet.
+    def available_location_ids(square_object)
+      return nil unless outer_field(square_object, :present_at_all_locations) == false
+
+      Array(outer_field(square_object, :present_at_location_ids))
+    end
+
+    # The SDK deserializes a catalog object into a union member class
+    # (CatalogObjectItem, ...) that declares only its `*_data` payload. Every
+    # top-level key becomes an "extra field", and the SDK defines its
+    # accessor on the member CLASS the first time any payload carries that
+    # key. An optional key that no payload in this process has carried yet
+    # therefore has no method at all, so it is read through respond_to?
+    # instead of being called directly.
+    def outer_field(square_object, name)
+      square_object.respond_to?(name) ? square_object.public_send(name) : nil
     end
   end
 end

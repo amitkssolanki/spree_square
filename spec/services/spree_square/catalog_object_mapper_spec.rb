@@ -2,25 +2,11 @@ RSpec.describe SpreeSquare::CatalogObjectMapper do
   let(:store) { Spree::Store.default }
   let(:mapper) { described_class.new }
 
-  # Minimal stand-ins for the Square SDK's typed response objects — real
-  # payload shapes for these were verified against the live sandbox in
-  # M2/M3; this spec is about our own mapping decisions, not re-verifying
-  # Square's wire format. A plain double, not instance_double: Square's
-  # CatalogObject is a discriminated union (Fern-generated) whose member
-  # classes define fields dynamically — verifying doubles against it proved
-  # order-dependent (passed in isolation, failed as part of the full suite,
-  # depending on which concrete member class Zeitwerk had already
-  # autoloaded), which is exactly the kind of flakiness a verifying double
-  # is supposed to prevent, not cause.
+  # Real square.rb objects (spec/support/square_catalog_objects.rb), never
+  # doubles: a double answers any method, which is how a field Square does
+  # not send reached production on 2026-09-11.
   def square_object(id:, type:, version: 1, **data_by_key)
-    data_key = "#{type.downcase}_data"
-    double(
-      "Square::Types::CatalogObject(#{type})",
-      id: id,
-      type: type,
-      version: version,
-      **{ data_key.to_sym => OpenStruct.new(data_by_key[data_key.to_sym] || {}) }
-    )
+    square_catalog_object(id: id, type: type, version: version, **data_by_key)
   end
 
   # B2: item/variation/category mapping writes SpreePos::ExternalRef, which
@@ -107,7 +93,7 @@ RSpec.describe SpreeSquare::CatalogObjectMapper do
     def variation(id:, name:, amount:, version: 1)
       square_object(
         id: id, type: 'ITEM_VARIATION', version: version,
-        item_variation_data: { name: name, pricing_type: 'FIXED_PRICING', price_money: OpenStruct.new(amount: amount, currency: 'USD') }
+        item_variation_data: { name: name, pricing_type: 'FIXED_PRICING', price_money: { amount: amount, currency: 'USD' } }
       )
     end
 
