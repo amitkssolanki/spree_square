@@ -105,7 +105,13 @@ module SpreeSquare
       # still-valid, or about to 401) access_token rather than raising here.
       # The eventual 401 from Square is a clearer signal than this method
       # raising somewhere deep inside a webhook job.
+      # Alert, not just log: the request still proceeds on the current token,
+      # so a refresh that keeps failing is otherwise silent until the token
+      # expires and every Square call starts failing.
       Rails.logger.error("[SpreeSquare] token refresh failed for store #{@credential.store_id}: #{e.message}")
+      SpreePos::Alerting.capture(e, source: 'spree_square',
+                                    context: { area: 'square_token_refresh', store_id: @credential.store_id,
+                                               token_expires_at: @credential.expires_at })
     end
 
     def base_url

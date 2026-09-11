@@ -55,6 +55,18 @@ RSpec.describe SpreeSquare::Client do
       expect(credential.expires_at).to be > 25.days.from_now
     end
 
+    it 'alerts when a refresh attempt fails, because the fallback would otherwise hide it until expiry' do
+      create(:square_credential, store: store, access_token: 'stale-but-still-valid', refresh_token: 'refresh-me', expires_at: 3.days.from_now)
+      stub_request(:post, %r{oauth2/token})
+        .to_return(status: 500, headers: { 'Content-Type' => 'application/json' }, body: '{"errors":[{"code":"INTERNAL_SERVER_ERROR"}]}')
+      allow(SpreePos::Alerting).to receive(:capture)
+
+      described_class.for_store(store)
+
+      expect(SpreePos::Alerting).to have_received(:capture)
+        .with(anything, hash_including(source: 'spree_square', context: hash_including(area: 'square_token_refresh')))
+    end
+
     it 'falls back to the still-usable access_token when a refresh attempt fails' do
       create(:square_credential, store: store, access_token: 'stale-but-still-valid', refresh_token: 'refresh-me', expires_at: 3.days.from_now)
 
