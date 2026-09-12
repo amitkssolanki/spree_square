@@ -2,6 +2,23 @@
 
 All notable changes to this project are documented here.
 
+## 2.0.2
+
+One authoritative credential, and an alert when refreshing it fails.
+
+- Phase 3 mirrored the Square credential onto `SpreePos::Connection`. Nothing reads that copy: the
+  client resolves and refreshes from `SpreeSquare::Credential`, and the admin OAuth flow writes it. It
+  drifted on the first automatic production refresh (2026-09-12), which left the connection holding the
+  pre-refresh token and expiry. A migration clears the mirrored columns from Square connections, never
+  from a store that has no credential (that copy would be the only one) and never from another
+  provider. It is irreversible by design: what it clears was a stale duplicate.
+- A failed token refresh now alerts through `SpreePos::Alerting` as well as logging. The rescue keeps
+  the request running on the current token, so a refresh that keeps failing was otherwise silent until
+  the token expired and every Square call started failing at once.
+- Regression coverage for the drift: the client authenticates from the credential even when a
+  connection disagrees, a refresh lands in the credential and leaves the connection nil, and no file in
+  this gem reads or writes a connection credential column.
+
 ## 2.0.1
 
 Fixes the catalog import that failed in production on 2026-09-11 and was rolled back (host repo:
