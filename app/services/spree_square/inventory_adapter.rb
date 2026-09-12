@@ -41,6 +41,28 @@ module SpreeSquare
     # exactly: an item that went out of stock is precisely the drift this
     # pass exists to catch, and it would not appear in an IN_STOCK-only
     # result.
+    # Square's own webhook payload shape, which is why it lives here and not
+    # in SpreePos::InventoryWebhookJob. The job used to dig
+    # `data.object.inventory_counts` out of the event itself, which worked for
+    # Square and silently yielded nothing for every other provider.
+    #
+    # `state` maps to the neutral DTO's `in_stock` field, which is what
+    # #call's `state:` argument reads; the wording differs, the value does
+    # not.
+    #
+    # @param event [SpreePos::WebhookEvent]
+    # @return [Array<SpreePos::Catalog::InventoryCount>]
+    def counts_from_event(event)
+      Array(event.payload.dig('data', 'object', 'inventory_counts')).map do |count|
+        SpreePos::Catalog::InventoryCount.new(
+          external_variant_id: count['catalog_object_id'],
+          external_location_id: count['location_id'],
+          quantity: count['quantity'],
+          in_stock: count['state']
+        )
+      end
+    end
+
     def reconcile_all!
       location_ids = SpreeSquare::LocationMapping.pluck(:square_location_id)
       return if location_ids.empty?

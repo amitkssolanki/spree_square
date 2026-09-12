@@ -148,3 +148,38 @@ RSpec.describe SpreeSquare::InventoryAdapter do
     end
   end
 end
+
+# The webhook payload parse moved here from SpreePos::InventoryWebhookJob,
+# which had Square's shape hardcoded in provider-neutral code (that made the
+# same path a silent no-op for every other provider). Behaviour is unchanged;
+# what changed is which gem owns the shape.
+RSpec.describe SpreeSquare::InventoryAdapter, '#counts_from_event' do
+  subject(:adapter) { described_class.new }
+
+  def event_with(payload)
+    SpreePos::WebhookEvent.new(provider: 'square', kind: 'inventory_changed',
+                               idempotency_key: "evt_#{SecureRandom.hex(4)}", payload: payload)
+  end
+
+  it "reads Square's data.object.inventory_counts into neutral DTOs" do
+    event = event_with(
+      'data' => { 'object' => { 'inventory_counts' => [
+        { 'catalog_object_id' => 'sq_var_1', 'location_id' => 'sq_loc_1', 'quantity' => '3', 'state' => 'IN_STOCK' },
+        { 'catalog_object_id' => 'sq_var_2', 'location_id' => 'sq_loc_1', 'quantity' => '0', 'state' => 'SOLD_OUT' }
+      ] } }
+    )
+
+    counts = adapter.counts_from_event(event)
+
+    expect(counts.map(&:class).uniq).to eq([SpreePos::Catalog::InventoryCount])
+    expect(counts.map(&:external_variant_id)).to eq(%w[sq_var_1 sq_var_2])
+    expect(counts.map(&:external_location_id)).to eq(%w[sq_loc_1 sq_loc_1])
+    expect(counts.map(&:quantity)).to eq(%w[3 0])
+    expect(counts.map(&:in_stock)).to eq(%w[IN_STOCK SOLD_OUT])
+  end
+
+  it 'returns an empty array for a payload carrying no counts' do
+    expect(adapter.counts_from_event(event_with({}))).to eq([])
+    expect(adapter.counts_from_event(event_with('data' => { 'object' => {} }))).to eq([])
+  end
+end
