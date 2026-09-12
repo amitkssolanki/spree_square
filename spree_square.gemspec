@@ -56,7 +56,13 @@ Gem::Specification.new do |s|
   # Bounded, not open-ended. 0.2 is the release that changed the webhook
   # contract to extract_events and moved catalog mappings onto
   # SpreePos::ExternalRef; this adapter requires both.
-  s.add_dependency 'spree_pos', '~> 0.2'
+  # Pinned to a single MINOR on purpose. spree_pos is pre-1.0, so its minor is the
+  # breaking segment: 0.3.0 added `inventory.counts_from_event` to the provider
+  # contract, which this gem implements. `~> 0.3` would permit 0.4 and re-open
+  # exactly the trap that made this explicit, because `~> 0.2` permitted 0.3 and
+  # therefore allowed a provider gem that predates the contract to be installed
+  # alongside a spree_pos that requires it.
+  s.add_dependency 'spree_pos', '~> 0.3.0'
 
   # Square's official Ruby SDK. Current major (Fern-generated) uses
   # Square::Client.new(token:) / square.orders.create(...) — NOT the legacy

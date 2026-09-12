@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented here.
 
+## 2.1.0
+
+Requires spree_pos ~> 0.3.0 and must be released with it.
+
+- `InventoryAdapter#counts_from_event` implements the provider contract spree_pos 0.3.0 introduced,
+  parsing `data.object.inventory_counts` here rather than in the neutral job. Behaviour for Square is
+  identical; what changed is which gem owns the payload shape.
+- Regression coverage pinning that the provider-neutral fixes made for Clover did not alter Square:
+  the object id stays the variant SKU so the new collision branch never triggers, ExternalRefs still
+  carry `external_version` and no timestamp (which is what production holds), an older version is
+  still rejected and a newer one applied, and a real Square inventory payload still reaches Spree
+  through the neutral job.
+
 ## 2.0.2
 
 One authoritative credential, and an alert when refreshing it fails.
