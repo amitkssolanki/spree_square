@@ -62,7 +62,9 @@ Gem::Specification.new do |s|
   # exactly the trap that made this explicit, because `~> 0.2` permitted 0.3 and
   # therefore allowed a provider gem that predates the contract to be installed
   # alongside a spree_pos that requires it.
-  s.add_dependency 'spree_pos', '~> 0.3.0'
+  # 0.4.0 adds the order-push switch (SpreePos::OrderPushGate / OrderPushActivation)
+  # and its column, which this gem relies on.
+  s.add_dependency 'spree_pos', '~> 0.4.0'
 
   # Square's official Ruby SDK. Current major (Fern-generated) uses
   # Square::Client.new(token:) / square.orders.create(...) — NOT the legacy

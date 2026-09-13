@@ -14,7 +14,10 @@ RSpec.describe 'SpreePos::OrderPush registry resolution' do
   let!(:connection) { create(:pos_connection, store: order.store, provider: 'square') }
   let!(:pos_location) do
     stock_location = create(:stock_location, store: order.store)
-    mapping = create(:pos_location, pos_connection: connection, stock_location: stock_location)
+    # Enabled, like every Square location that existed before spree_pos 0.4.0
+    # (KeepExistingSquareLocationsPushingOrders). A new one starts disabled;
+    # see the last example.
+    mapping = create(:pos_location, :order_push_enabled, pos_connection: connection, stock_location: stock_location)
     create(:shipment, order: order, stock_location: stock_location)
     order.reload
     mapping
@@ -79,5 +82,13 @@ RSpec.describe 'SpreePos::OrderPush registry resolution' do
 
   def described_class_call
     SpreePos::OrderPush.call(order)
+  end
+
+  it 'never reaches the Square adapter for a location whose order pushing is disabled' do
+    SpreePos::OrderPushActivation.disable!(pos_location, actor: 'spec')
+    expect_any_instance_of(SpreeSquare::OrderAdapter).not_to receive(:push)
+
+    expect(described_class_call).to be_a(SpreePos::OrderPush::Refused)
+    expect(SpreePos::OrderMapping.where(order: order)).to be_empty
   end
 end

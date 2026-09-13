@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented here.
 
+## 2.2.0
+
+Requires spree_pos ~> 0.4.0 and must be released with it.
+
+- Data migration `KeepExistingSquareLocationsPushingOrders`: spree_pos 0.4.0 adds an order-push switch
+  that defaults every location to disabled. This enables it for the Square locations that exist when
+  the migration runs, and for nothing else (no other provider, no later Square location), so a deploy
+  never silently stops a live kitchen's tickets. It fails the deploy if the spree_pos column is missing
+  rather than skipping.
+- `OrderCompletedSubscriber` does not enqueue a push for an order whose mapped location has pushing
+  disabled. The job re-checks regardless; this is an optimisation and a clearer log line.
+- Behaviour for an existing, enabled Square location is unchanged.
+
 ## 2.1.0
 
 Requires spree_pos ~> 0.3.0 and must be released with it.
