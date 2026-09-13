@@ -11,7 +11,7 @@
 # registration broke, these fail.
 RSpec.describe 'SpreePos::OrderPush registry resolution' do
   let(:order) { create(:order) }
-  let!(:connection) { create(:pos_connection, store: order.store, provider: 'square') }
+  let!(:connection) { create(:pos_connection, store: order.store, provider: 'square', status: 'active') }
   let!(:pos_location) do
     stock_location = create(:stock_location, store: order.store)
     # Enabled, like every Square location that existed before spree_pos 0.4.0
@@ -90,5 +90,16 @@ RSpec.describe 'SpreePos::OrderPush registry resolution' do
 
     expect(described_class_call).to be_a(SpreePos::OrderPush::Refused)
     expect(SpreePos::OrderMapping.where(order: order)).to be_empty
+  end
+
+  # spree_pos 0.5.1: the connection is part of the activation gate.
+  it 'never reaches the Square adapter while the connection is not active, even with the location enabled' do
+    connection.update!(status: 'disconnected')
+    expect_any_instance_of(SpreeSquare::OrderAdapter).not_to receive(:push)
+
+    result = described_class_call
+
+    expect(result).to be_a(SpreePos::OrderPush::Refused)
+    expect(result.reason).to eq(:connection_inactive)
   end
 end
