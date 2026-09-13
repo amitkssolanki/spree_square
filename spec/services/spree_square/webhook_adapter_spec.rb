@@ -69,9 +69,13 @@ RSpec.describe SpreeSquare::WebhookAdapter do
   end
 
   describe '.signing_key' do
-    it 'delegates to the Client instance webhook signature key' do
-      client = instance_double(SpreeSquare::Client, webhook_signature_key: 'the-key')
-      allow(SpreeSquare::Client).to receive(:instance).and_return(client)
+    # App-level: resolving it must not build a client for any store (it used
+    # to build one for the default store just to read an ENV value).
+    it 'reads the app-level signing key without building a store client' do
+      allow(ENV).to receive(:[]).and_call_original
+      allow(ENV).to receive(:[]).with('SQUARE_WEBHOOK_SIGNATURE_KEY').and_return('the-key')
+      expect(SpreeSquare::Client).not_to receive(:new)
+      expect(SpreeSquare::Client).not_to receive(:instance)
 
       expect(described_class.signing_key).to eq('the-key')
     end

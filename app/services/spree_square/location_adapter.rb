@@ -19,16 +19,23 @@ module SpreeSquare
   class LocationAdapter
     def self.list(...) = new(...).list
 
-    def initialize(client: SpreeSquare::Client.instance)
+    # `client:` is for specs. At runtime the client is built lazily for the
+    # connection, never eagerly for the default store.
+    def initialize(client: nil, connection: nil)
       @client = client
+      @connection = connection
     end
 
     def list
-      response = @client.locations.list
+      response = client.locations.list
       Array(response.locations).map { |location| to_dto(location) }
     end
 
     private
+
+    def client
+      @client ||= SpreeSquare::Client.for_connection(@connection)
+    end
 
     def to_dto(location)
       SpreePos::Catalog::Location.new(

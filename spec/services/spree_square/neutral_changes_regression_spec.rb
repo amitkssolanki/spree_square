@@ -11,7 +11,7 @@
 # carrying external_updated_at.
 RSpec.describe 'Square is unaffected by the provider-neutral Clover fixes' do
   let(:store) { Spree::Store.default }
-  let(:mapper) { SpreeSquare::CatalogObjectMapper.new }
+  let(:mapper) { SpreeSquare::CatalogObjectMapper.new(connection: pos_connection) }
   let!(:pos_connection) do
     SpreePos::Connection.create!(store: store, provider: 'square',
                                  external_merchant_id: 'sq_merchant_1', catalog_role: 'source')

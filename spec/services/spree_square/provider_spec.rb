@@ -11,7 +11,8 @@ RSpec.describe SpreeSquare::Provider do
   let(:search_response) { double('search response', objects: [], related_objects: [], cursor: nil) }
 
   before do
-    allow(SpreeSquare::Client).to receive(:instance).and_return(client)
+    allow(SpreeSquare::Client).to receive(:for_connection).with(connection).and_return(client)
+    allow(SpreeSquare::Client).to receive(:instance).and_raise('the default-store client must never be used by a provider')
     allow(client).to receive(:catalog).and_return(catalog_api)
     allow(client).to receive(:locations).and_return(locations_api)
     allow(catalog_api).to receive(:search).and_return(search_response)

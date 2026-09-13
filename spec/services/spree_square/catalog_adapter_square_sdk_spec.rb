@@ -157,7 +157,7 @@ RSpec.describe SpreeSquare::CatalogAdapter, 'with real Square SDK objects' do
     before do
       Spree::ShippingCategory.find_or_create_by!(name: 'Default')
       Spree::Channel.find_or_create_by!(code: 'online') { |c| c.name = 'Online Store'; c.store = store }
-      allow(SpreeSquare::Client).to receive(:instance).and_return(client)
+      allow(SpreeSquare::Client).to receive(:for_connection).with(connection).and_return(client)
       # CatalogSync downloads each item's primary image; the fixture's image
       # URLs are sanitized placeholders, so serve a 1x1 PNG for them.
       stub_request(:get, %r{\Ahttps://example\.test/catalog-images/}).to_return(
@@ -170,7 +170,7 @@ RSpec.describe SpreeSquare::CatalogAdapter, 'with real Square SDK objects' do
       variations = raw_items.sum { |i| i.item_data.variations.size }
       result = nil
 
-      expect { result = SpreeSquare::CatalogImporter.call }.to change(Spree::Product, :count).by(raw_items.size)
+      expect { result = SpreeSquare::CatalogImporter.call(connection: connection) }.to change(Spree::Product, :count).by(raw_items.size)
       expect(result.items_count).to eq(raw_items.size)
       refs = SpreePos::ExternalRef.where(pos_connection: connection).group(:resource_type).count
       expect(refs).to include('item' => raw_items.size, 'variation' => variations,

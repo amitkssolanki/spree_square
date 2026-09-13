@@ -1,6 +1,6 @@
 RSpec.describe 'SpreeSquare::CatalogObjectMapper tax handling (Phase 8)' do
   let(:store) { Spree::Store.default }
-  let(:mapper) { SpreeSquare::CatalogObjectMapper.new }
+  let(:mapper) { SpreeSquare::CatalogObjectMapper.new(connection: pos_connection) }
   let(:state) { create(:state, name: 'Ohio', abbr: 'OH') }
   let!(:default_stock_location) { create(:stock_location, default: true, state: state, country: state.country) }
   let!(:tax_zone) { create(:zone, name: 'OH Sales Tax', kind: 'state').tap { |z| z.members.create!(zoneable: state) } }

@@ -1,6 +1,6 @@
 RSpec.describe SpreeSquare::CatalogObjectMapper do
   let(:store) { Spree::Store.default }
-  let(:mapper) { described_class.new }
+  let(:mapper) { described_class.new(connection: pos_connection) }
 
   # Real square.rb objects (spec/support/square_catalog_objects.rb), never
   # doubles: a double answers any method, which is how a field Square does

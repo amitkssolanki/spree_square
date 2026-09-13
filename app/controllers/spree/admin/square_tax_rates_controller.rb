@@ -23,7 +23,11 @@ module Spree
       # might separately hand-create in the regular Spree tax-rates admin
       # page.
       def scope
-        Spree::TaxRate.where(id: SpreePos::TaxCategoryMapping.select(:tax_rate_id))
+        # Only rates synced from this store's own POS connections. Spree::TaxRate
+        # is global, so the unscoped version listed every store's POS taxes.
+        connection_ids = SpreePos::Connection.where(store_id: current_store.id).select(:id)
+        mapping_ids = SpreePos::TaxMapping.where(pos_connection_id: connection_ids).select(:id)
+        Spree::TaxRate.where(id: SpreePos::TaxCategoryMapping.where(tax_mapping_id: mapping_ids).select(:tax_rate_id))
       end
     end
   end

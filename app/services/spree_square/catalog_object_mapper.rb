@@ -29,12 +29,12 @@ module SpreeSquare
   class CatalogObjectMapper
     VARIATION_OPTION_TYPE_NAME = SpreePos::CatalogSync::VARIATION_OPTION_TYPE_NAME
 
-    def initialize(related_objects_by_id: {})
+    def initialize(connection:, related_objects_by_id: {})
       @related_objects_by_id = related_objects_by_id
       # No credential is resolved by this construction — CatalogAdapter's
       # client is lazy precisely so DTO conversion stays free.
-      @adapter = SpreeSquare::CatalogAdapter.new
-      @sync = SpreePos::CatalogSync.new
+      @adapter = SpreeSquare::CatalogAdapter.new(connection: connection)
+      @sync = SpreePos::CatalogSync.new(connection: connection)
     end
 
     def map_category(square_object)

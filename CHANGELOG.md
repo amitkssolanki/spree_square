@@ -2,6 +2,23 @@
 
 All notable changes to this project are documented here.
 
+## 2.3.0
+
+Multi-tenancy isolation. Requires spree_pos ~> 0.5.0.
+
+- Every Square call made for a connection uses THAT connection's store credential
+  (`SpreeSquare::Client.for_connection`), which also refuses a credential for a different merchant than the
+  connection's. The catalog, location, order and inventory adapters used `Client.instance`, the DEFAULT store's
+  credential: with two stores, store B's orders were created in store A's Square merchant and store B's catalog
+  import read store A's catalog.
+- `CatalogImporter.call(connection:)` and `CatalogObjectMapper.new(connection:)` require the connection.
+- Inventory reconciliation reads only the connection's own Square locations; an inventory count for a location owned
+  by another connection is skipped.
+- `OrderAdapter#build_payload` refuses an order whose Square location belongs to another connection.
+- The webhook signing key is read without building any store's client.
+- Admin "Square tax rates" lists only rates synced from the current store's connections.
+- `Client.instance` / `for_store` remain for single-store operator rake tasks only.
+
 ## 2.2.0
 
 Requires spree_pos ~> 0.4.0 and must be released with it.

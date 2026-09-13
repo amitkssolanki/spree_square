@@ -68,9 +68,12 @@ module SpreeSquare
     # are all `def self.`), so the class itself is the adapter.
     def auth = SpreeSquare::OauthClient
 
-    def locations = SpreeSquare::LocationAdapter.new
+    # Every adapter is bound to this provider's connection, so every Square
+    # call uses that connection's own store credential (Client.for_connection),
+    # never the default store's.
+    def locations = SpreeSquare::LocationAdapter.new(connection: connection)
 
-    def catalog = SpreeSquare::CatalogAdapter.new
+    def catalog = SpreeSquare::CatalogAdapter.new(connection: connection)
 
     def orders = SpreeSquare::OrderAdapter.new(connection: connection)
 

@@ -43,6 +43,7 @@ module SpreeSquare
     def build_payload(order)
       location_mapping = location_mapping_for(order)
       raise "No Square location mapped for order #{order.number}" unless location_mapping
+      ensure_location_belongs_to_connection!(location_mapping, order)
 
       @resolved_connection = resolve_connection(location_mapping)
 
@@ -79,7 +80,9 @@ module SpreeSquare
     # this class stays a plain provider adapter with no push_state/retry
     # awareness of its own).
     def push(order)
-      client = SpreeSquare::Client.instance
+      # This connection's own store credential. Never the default store's:
+      # with two stores that would create this order in another merchant.
+      client = SpreeSquare::Client.for_connection(@connection)
 
       square_order = create_order(client, order)
       payment = record_external_payment(client, order, square_order)
@@ -221,6 +224,20 @@ module SpreeSquare
     # to the ad-hoc (no catalog_object_id) shape that #build_line_item
     # otherwise reserves for genuinely unmapped variants, and Square would
     # accept the ticket without complaint.
+    # The order's Square location must belong to this adapter's connection.
+    # SpreePos::OrderPush resolves the connection FROM the location, so this
+    # holds for every normal push; it refuses anything else (a direct call, a
+    # remapped location) before any Square request is built.
+    def ensure_location_belongs_to_connection!(location_mapping, order)
+      return if @connection.nil?
+
+      owner = SpreePos::Location.find_by(spree_stock_location_id: location_mapping.spree_stock_location_id)
+      return if owner && owner.pos_connection_id == @connection.id
+
+      raise SpreePos::PermanentError,
+            "Order #{order.number}'s Square location does not belong to connection #{@connection.id}; not pushing"
+    end
+
     def resolve_connection(location_mapping)
       connection = @connection ||
                    SpreePos::Location.find_by(

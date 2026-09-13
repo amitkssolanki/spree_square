@@ -51,7 +51,7 @@ module SpreeSquare
       # codebase — the same "onboarding is Phase 5" constraint Agent D1
       # hit for order push.
       def signing_key
-        SpreeSquare::Client.instance.webhook_signature_key
+        SpreeSquare::Client.webhook_signature_key
       end
 
       # Square's `event_id` is already a real idempotency key (plan 15.1).

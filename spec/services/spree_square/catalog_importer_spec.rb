@@ -45,6 +45,7 @@ RSpec.describe SpreeSquare::CatalogImporter do
   let(:tax) { raw.fetch('TAX') }
   let(:item) { raw.fetch('ITEM') }
 
+  let(:connection) { create(:pos_connection, provider: 'square', catalog_role: 'source') }
   let(:client) { instance_double(SpreeSquare::Client) }
   let(:catalog_api) { double('catalog_api') }
   # B3: the importer's collaborator is now the provider-neutral sync,
@@ -52,9 +53,11 @@ RSpec.describe SpreeSquare::CatalogImporter do
   let(:mapper) { instance_double(SpreePos::CatalogSync) }
 
   before do
-    allow(SpreeSquare::Client).to receive(:instance).and_return(client)
+    # The client is resolved for the importer's own connection, never the
+    # default store (multi-tenancy, 2026-09-13).
+    allow(SpreeSquare::Client).to receive(:for_connection).with(connection).and_return(client)
     allow(client).to receive(:catalog).and_return(catalog_api)
-    allow(SpreePos::CatalogSync).to receive(:new).and_return(mapper)
+    allow(SpreePos::CatalogSync).to receive(:new).with(connection: connection).and_return(mapper)
   end
 
   describe '#call' do
@@ -71,7 +74,7 @@ RSpec.describe SpreeSquare::CatalogImporter do
         expect(mapper).to receive(:map_tax).ordered
         expect(mapper).to receive(:map_item).ordered
 
-        described_class.call
+        described_class.call(connection: connection)
       end
 
       it 'reports how many of each type it imported' do
@@ -80,7 +83,7 @@ RSpec.describe SpreeSquare::CatalogImporter do
         allow(mapper).to receive(:map_tax)
         allow(mapper).to receive(:map_item)
 
-        result = described_class.call
+        result = described_class.call(connection: connection)
 
         expect(result.categories_count).to eq(category.size)
         expect(result.modifier_lists_count).to eq(modifier_list.size)
@@ -108,7 +111,7 @@ RSpec.describe SpreeSquare::CatalogImporter do
         allow(mapper).to receive(:map_tax)
         allow(mapper).to receive(:map_item)
 
-        result = described_class.call
+        result = described_class.call(connection: connection)
 
         expect(catalog_api).to have_received(:search).twice
         expect(result.items_count).to eq(item.size)
@@ -121,7 +124,7 @@ RSpec.describe SpreeSquare::CatalogImporter do
         expect(mapper).to receive(:map_tax).ordered
         expect(mapper).to receive(:map_item).ordered
 
-        described_class.call
+        described_class.call(connection: connection)
       end
     end
   end

@@ -20,11 +20,14 @@
 RSpec.describe 'SpreePos webhooks (new route, square)', type: :request do
   let(:signing_key) { 'test-signing-key' }
   let(:path) { '/spree_pos/webhooks/square' }
-  let(:body) { { event_id: 'evt_1', type: 'catalog.version.updated', data: {} }.to_json }
+  let(:body) { { event_id: 'evt_1', merchant_id: 'SQ_MERCHANT', type: 'catalog.version.updated', data: {} }.to_json }
 
   before do
-    client = instance_double(SpreeSquare::Client, webhook_signature_key: signing_key)
-    allow(SpreeSquare::Client).to receive(:instance).and_return(client)
+    # App-level signing key, read without building any store's client.
+    allow(SpreeSquare::Client).to receive(:webhook_signature_key).and_return(signing_key)
+    # A delivery is only acted on for a merchant this deployment has a
+    # connection for (multi-tenancy, 2026-09-13).
+    create(:pos_connection, provider: 'square', external_merchant_id: 'SQ_MERCHANT')
   end
 
   def signed_headers(body, url: "http://www.example.com#{path}")

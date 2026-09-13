@@ -16,16 +16,22 @@ module SpreeSquare
   class CatalogImporter
     Result = Struct.new(:categories_count, :modifier_lists_count, :taxes_count, :items_count, keyword_init: true)
 
-    def self.call = new.call
+    def self.call(connection:) = new(connection: connection).call
+
+    # The connection is required: it decides whose Square catalog is read
+    # (its store's credential) and which store the products land in.
+    def initialize(connection:)
+      @connection = connection
+    end
 
     def call
-      adapter = SpreeSquare::CatalogAdapter.new
+      adapter = SpreeSquare::CatalogAdapter.new(connection: @connection)
       snapshot = adapter.fetch_all
 
       # B2: no mapping model is injected any more. CatalogSync persists to
       # SpreePos::ExternalRef, its own gem's neutral table, scoped to the
       # connection it resolves.
-      sync = SpreePos::CatalogSync.new
+      sync = SpreePos::CatalogSync.new(connection: @connection)
 
       snapshot.categories.each { |category| sync.map_category(category) }
       snapshot.modifier_groups.each { |group| sync.map_modifier_list(group) }

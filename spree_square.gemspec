@@ -64,7 +64,7 @@ Gem::Specification.new do |s|
   # alongside a spree_pos that requires it.
   # 0.4.0 adds the order-push switch (SpreePos::OrderPushGate / OrderPushActivation)
   # and its column, which this gem relies on.
-  s.add_dependency 'spree_pos', '~> 0.4.0'
+  s.add_dependency 'spree_pos', '~> 0.5.0'
 
   # Square's official Ruby SDK. Current major (Fern-generated) uses
   # Square::Client.new(token:) / square.orders.create(...) — NOT the legacy

@@ -63,11 +63,17 @@ module SpreeSquare
       end
     end
 
+    # Only this connection's own locations, read with this connection's own
+    # credential. It used to pluck EVERY mapped Square location in the
+    # database and read them with the default store's token.
     def reconcile_all!
-      location_ids = SpreeSquare::LocationMapping.pluck(:square_location_id)
+      raise SpreePos::PermanentError, 'Square inventory reconciliation needs a connection' if @connection.nil?
+
+      stock_location_ids = SpreePos::Location.where(pos_connection_id: @connection.id).select(:spree_stock_location_id)
+      location_ids = SpreeSquare::LocationMapping.where(spree_stock_location_id: stock_location_ids).pluck(:square_location_id)
       return if location_ids.empty?
 
-      SpreeSquare::Client.instance.inventory.batch_get_counts(location_ids: location_ids).each do |count|
+      SpreeSquare::Client.for_connection(@connection).inventory.batch_get_counts(location_ids: location_ids).each do |count|
         call(
           catalog_object_id: count.catalog_object_id,
           location_id: count.location_id,
@@ -86,6 +92,16 @@ module SpreeSquare
       return unless location_mapping
 
       connection = resolve_connection(location_mapping)
+      # A count for a location owned by a DIFFERENT connection than the one
+      # this adapter acts for is not ours to apply, whatever the payload says:
+      # writing it would change another store's stock.
+      if @connection && !location_owned_by?(location_mapping, @connection)
+        Rails.logger.warn(
+          "[SpreeSquare] inventory count for location #{location_id.inspect} does not belong to connection " \
+          "#{@connection.id} - skipping."
+        )
+        return
+      end
       # Distinct from the two ordinary misses below, which are silent by
       # design (an unmapped location or an unsynced item is a normal,
       # expected state). A location that IS mapped but resolves to no POS
@@ -119,6 +135,11 @@ module SpreeSquare
     # physical location. Never a global or default lookup: an inventory
     # count belongs to exactly one location, and that location belongs to
     # exactly one POS connection.
+    def location_owned_by?(location_mapping, connection)
+      SpreePos::Location.exists?(spree_stock_location_id: location_mapping.spree_stock_location_id,
+                                 pos_connection_id: connection.id)
+    end
+
     def resolve_connection(location_mapping)
       @connection || SpreePos::Location.find_by(stock_location: location_mapping.stock_location)&.pos_connection
     end

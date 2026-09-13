@@ -13,15 +13,18 @@
 RSpec.describe 'SpreeSquare webhooks (legacy route)', type: :request do
   let(:signing_key) { 'test-signing-key' }
   let(:path) { '/spree_square/webhooks/square' }
-  let(:body) { { event_id: 'evt_1', type: 'catalog.version.updated', data: {} }.to_json }
+  let(:body) { { event_id: 'evt_1', merchant_id: 'SQ_MERCHANT', type: 'catalog.version.updated', data: {} }.to_json }
 
   before do
     # SpreeSquare::Client.instance initializes a real Square::Client and
     # raises MissingCredentialsError without a configured access token —
     # stub the class method itself rather than touching the real singleton,
     # so this spec needs no Square credentials at all.
-    client = instance_double(SpreeSquare::Client, webhook_signature_key: signing_key)
-    allow(SpreeSquare::Client).to receive(:instance).and_return(client)
+    # App-level signing key, read without building any store's client.
+    allow(SpreeSquare::Client).to receive(:webhook_signature_key).and_return(signing_key)
+    # A delivery is only acted on for a merchant this deployment has a
+    # connection for (multi-tenancy, 2026-09-13).
+    create(:pos_connection, provider: 'square', external_merchant_id: 'SQ_MERCHANT')
   end
 
   def signed_headers(body, url: "http://www.example.com#{path}")
@@ -92,7 +95,7 @@ RSpec.describe 'SpreeSquare webhooks (legacy route)', type: :request do
         'order.updated' => SpreePos::OrderWebhookJob,
         'order.fulfillment.updated' => SpreePos::OrderWebhookJob
       }.fetch(event_type)
-      typed_body = { event_id: "evt_#{event_type}", type: event_type, data: {} }.to_json
+      typed_body = { event_id: "evt_#{event_type}", merchant_id: 'SQ_MERCHANT', type: event_type, data: {} }.to_json
 
       expect(expected_job).to receive(:perform_later)
 
@@ -102,5 +105,15 @@ RSpec.describe 'SpreeSquare webhooks (legacy route)', type: :request do
       event = SpreePos::WebhookEvent.find_by(provider: 'square', idempotency_key: "evt_#{event_type}")
       expect(event.kind).to eq(expected_kind)
     end
+  end
+
+  it 'records, but never enqueues, a signed event for a Square merchant with no connection here' do
+    stranger = { event_id: 'evt_stranger', merchant_id: 'SOMEONE_ELSE', type: 'catalog.version.updated', data: {} }.to_json
+    expect(SpreePos::CatalogWebhookJob).not_to receive(:perform_later)
+
+    post path, params: stranger, headers: signed_headers(stranger)
+
+    expect(response).to have_http_status(:ok)
+    expect(SpreePos::WebhookEvent.find_by(idempotency_key: 'evt_stranger')).to have_attributes(status: 'failed', pos_connection_id: nil)
   end
 end

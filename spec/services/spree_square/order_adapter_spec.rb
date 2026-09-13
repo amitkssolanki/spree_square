@@ -143,7 +143,7 @@ RSpec.describe SpreeSquare::OrderAdapter do
     # different states) and means the location this order ships from is the
     # one whose tax zone has to exist.
     let(:stock_location) { create(:stock_location, store: store, state: state, country: state.country) }
-    let(:mapper) { SpreeSquare::CatalogObjectMapper.new }
+    let(:mapper) { SpreeSquare::CatalogObjectMapper.new(connection: pos_connection) }
 
     def square_object(id:, type:, version: 1, **data_by_key)
       square_catalog_object(id: id, type: type, version: version, **data_by_key)
@@ -273,7 +273,7 @@ RSpec.describe SpreeSquare::OrderAdapter do
       # Same reason as the describe above: the connection's own mapped
       # location wins over the store default when resolving the tax zone.
       let(:stock_location) { create(:stock_location, store: store, state: state, country: state.country) }
-      let(:mapper) { SpreeSquare::CatalogObjectMapper.new }
+      let(:mapper) { SpreeSquare::CatalogObjectMapper.new(connection: pos_connection) }
       # Phase 3: map_tax/composite_tax_category (via delivery_tax_category
       # below) require a resolvable SpreePos::Connection now.
       let!(:pos_connection) do

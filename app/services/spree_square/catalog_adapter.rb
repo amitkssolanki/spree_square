@@ -16,9 +16,15 @@ module SpreeSquare
     # SpreeSquare::CatalogObjectMapper started building one just to
     # convert a single object to a DTO — conversion needs no credential at
     # all. Only the methods that actually talk to Square (#fetch_raw) do.
-    def initialize(client: nil)
+    # `connection:` decides whose Square catalog is read (that connection's
+    # store credential) and which store it is written into. `client:` is for
+    # specs.
+    def initialize(client: nil, connection: nil)
       @client = client
+      @connection = connection
     end
+
+    attr_reader :connection
 
     # The provider contract's catalog-import entry point, added for
     # Package B1 (registry-dispatched catalog ORCHESTRATION only).
@@ -45,7 +51,7 @@ module SpreeSquare
     # SpreePos::Provider itself: the registry validates that a provider
     # responds to `catalog`, never what the returned object responds to.
     def import!
-      SpreeSquare::CatalogImporter.call
+      SpreeSquare::CatalogImporter.call(connection: connection)
     end
 
     # The provider contract's catalog-read entry point
@@ -140,7 +146,7 @@ module SpreeSquare
 
     # Resolved on first real use, never at construction. See #initialize.
     def client
-      @client ||= SpreeSquare::Client.instance
+      @client ||= SpreeSquare::Client.for_connection(connection)
     end
 
     # ------------------------------------------------------------------

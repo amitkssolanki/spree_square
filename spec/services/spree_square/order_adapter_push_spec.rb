@@ -51,10 +51,13 @@ RSpec.describe SpreeSquare::OrderAdapter do
   let(:payments_api) { double('payments_api') }
   let(:client) { instance_double(SpreeSquare::Client, orders: orders_api, payments: payments_api) }
 
-  subject(:adapter) { described_class.new }
+  let(:connection) { create(:pos_connection, provider: 'square') }
+
+  subject(:adapter) { described_class.new(connection: connection) }
 
   before do
-    allow(SpreeSquare::Client).to receive(:instance).and_return(client)
+    # The adapter's own connection's client (multi-tenancy, 2026-09-13).
+    allow(SpreeSquare::Client).to receive(:for_connection).with(connection).and_return(client)
     allow(adapter).to receive(:build_payload).with(order).and_return(builder_payload)
     allow(orders_api).to receive(:create)
       .with(idempotency_key: "spree-order-#{order.number}", order: builder_payload)

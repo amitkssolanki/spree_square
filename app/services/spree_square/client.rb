@@ -31,12 +31,51 @@ module SpreeSquare
     # using the stale pre-connection state until a restart. The lookup this
     # re-does each call is one indexed `SpreeSquare::Credential` query — not
     # worth trading correctness for.
+    #
+    # SINGLE-TENANT CONVENIENCE ONLY. `instance` and a bare `for_store` resolve
+    # the DEFAULT store's credential, so they are correct only for operator
+    # rake tasks run against a one-store install. Runtime code acting for a
+    # POS connection must use `for_connection`: with a second store, the
+    # default store's credential would send that store's orders and catalog
+    # reads to the wrong Square merchant.
     def self.instance
       for_store
     end
 
     def self.for_store(store = Spree::Store.default)
       new(credential: SpreeSquare::Credential.find_by(store: store))
+    end
+
+    class CredentialMismatchError < SpreePos::PermanentError; end
+
+    # The client for exactly one SpreePos::Connection: that connection's store's
+    # SpreeSquare::Credential, and only if the credential is for the merchant
+    # the connection names. A store whose credential was reconnected to a
+    # different Square merchant must not keep acting for the old connection.
+    #
+    # Outside production a store with no credential still falls back to
+    # SQUARE_ACCESS_TOKEN (dev/sandbox convenience, see #resolve_token), and
+    # that fallback carries no merchant to check. Production refuses it.
+    def self.for_connection(connection)
+      raise CredentialMismatchError, 'Square client requested without a POS connection' if connection.nil?
+
+      credential = SpreeSquare::Credential.find_by(store_id: connection.store_id)
+      if credential && credential.square_merchant_id.to_s != connection.external_merchant_id.to_s
+        raise CredentialMismatchError,
+              "Square credential for store #{connection.store_id} is for a different merchant than connection " \
+              "#{connection.id}; refusing to act for that connection"
+      end
+
+      new(credential: credential)
+    end
+
+    # App-level, not per-merchant, so it never needs a store or credential: one
+    # webhook subscription signing key covers every merchant this deployment
+    # serves. Resolving it through `instance` used to build a client for the
+    # default store just to read an ENV value.
+    def self.webhook_signature_key(environment = ENV.fetch('SQUARE_ENVIRONMENT', 'sandbox'))
+      Rails.application.credentials.dig(:square, environment.to_sym, :webhook_signature_key) ||
+        ENV['SQUARE_WEBHOOK_SIGNATURE_KEY'].presence
     end
 
     def initialize(credential: nil)
