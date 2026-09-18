@@ -20,9 +20,17 @@ Spree::PermittedAttributes.line_item_attributes << :square_modifier_ids
 # Uncomment lines below to add your own custom business logic
 # such as promotions, shipping methods, etc.
 Rails.application.config.after_initialize do
-  # M5: push a completed order to Square (as an already-paid ticket) as soon
-  # as Spree marks it complete.
-  Spree.subscribers << SpreeSquare::OrderCompletedSubscriber
+  # M5's order-push trigger (push a completed order to Square as an
+  # already-paid ticket as soon as Spree marks it complete) moved to
+  # spree_pos as SpreePos::OrderCompletedSubscriber / SpreePos::OrderPushJob
+  # (item 5 of docs/emberandfork-clover-sandbox-plan.md, spree_pos >=
+  # 0.6.0): it was already 100% provider-neutral, so it only ever having
+  # existed in this gem meant a Clover-only store (no spree_square
+  # installed) could never push a single order. spree_pos now registers
+  # the ONE order.completed subscriber in the codebase; nothing here does.
+  # Square's own observable push behavior is unchanged -- same
+  # SpreePos::OrderPush.call(order), same gates, just triggered from
+  # spree_pos instead of here.
 
   # Spree.shipping_methods << Spree::ShippingMethods::SuperExpensiveNotVeryFastShipping
   # Spree.payment_methods << Spree::PaymentMethods::VerySafeAndReliablePaymentMethod

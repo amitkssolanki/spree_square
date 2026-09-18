@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented here.
 
+## 2.4.0
+
+Order-push trigger moved to spree_pos (item 5 of docs/emberandfork-clover-sandbox-plan.md). Requires
+spree_pos ~> 0.6.0. No schema change.
+
+- Removed `SpreeSquare::OrderCompletedSubscriber` and `SpreeSquare::OrderPushJob`. Both were already 100%
+  provider-neutral (resolved through `SpreePos::OrderPush`/the connection behind the order's own fulfilling
+  location, never named Square) — living here meant a Clover-only store, with no Square gem installed at all,
+  had no order-push trigger whatsoever. `SpreePos::OrderCompletedSubscriber` / `SpreePos::OrderPushJob` (spree_pos
+  0.6.0) now cover this for every provider, registered as the one `order.completed` subscriber in the codebase.
+  Square's observable order-push behavior for an existing installation is unchanged: the same
+  `SpreePos::OrderPush.call(order)` runs through the same gates, just enqueued from spree_pos instead of here.
+
 ## 2.3.0
 
 Multi-tenancy isolation. Requires spree_pos ~> 0.5.0.
