@@ -60,15 +60,14 @@ module SpreeSquare
 
     def call
       adapter = SpreeSquare::CatalogAdapter.new(connection: @connection)
-      raw = adapter.fetch_raw
-      snapshot = adapter.to_snapshot(raw)
+      snapshot = adapter.fetch_all
 
       # B2: no mapping model is injected any more. CatalogSync persists to
       # SpreePos::ExternalRef, its own gem's neutral table, scoped to the
       # connection it resolves.
       sync = SpreePos::CatalogSync.new(connection: @connection)
       plan = SpreeSquare::CatalogPrunePlan.new(connection: @connection, snapshot: snapshot,
-                                               extra_present_ids: raw.second_pass_ids,
+                                               extra_present_ids: adapter.extra_present_ids,
                                                max_fraction: @max_prune_fraction)
       withheld = plan.exceeds_cap?
       withhold_removals!(sync, plan) if withheld

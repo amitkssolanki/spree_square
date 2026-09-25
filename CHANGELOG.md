@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented here.
 
+## 2.4.2
+
+Same behaviour as 2.4.1; deploy this one, not 2.4.1. No schema change.
+
+- `CatalogImporter` reads the catalog through `CatalogAdapter#fetch_all` again (the provider contract's entry
+  point), as 2.4.0 did. 2.4.1 called `fetch_raw` and `to_snapshot` directly, which produced the same snapshot
+  but bypassed any stub or override of `fetch_all`, so a host's specs that stub the catalog there reached the
+  real Square client. The second listing pass's ids are now kept on the adapter (`#extra_present_ids`).
+
 ## 2.4.1
 
 What is deleted in Square now leaves Spree (OI-195). Requires spree_pos `~> 0.6.0, >= 0.6.0.2`. No schema change.

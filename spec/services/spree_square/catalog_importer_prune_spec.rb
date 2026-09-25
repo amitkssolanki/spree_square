@@ -180,6 +180,19 @@ RSpec.describe SpreeSquare::CatalogImporter, 'pruning' do
     end
   end
 
+  # 2.4.2: the provider contract's entry point stays the one seam, so a host
+  # that stubs or overrides it still controls what is imported.
+  it 'reads the catalog through CatalogAdapter#fetch_all' do
+    empty = SpreePos::Catalog::Snapshot.new(categories: [], modifier_groups: [], taxes: [], items: [])
+    allow_any_instance_of(SpreeSquare::CatalogAdapter).to receive(:fetch_all).and_return(empty)
+
+    result = import
+
+    expect(catalog_api).to have_received(:search).once # the setup import only
+    expect(result.items_count).to eq(0)
+    expect(result.removals_withheld).to eq(1)
+  end
+
   describe 'an incomplete listing' do
     it 'prunes and maps nothing when a later page fails' do
       allow(catalog_api).to receive(:search).with(hash_including(cursor: nil))

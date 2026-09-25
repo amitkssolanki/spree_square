@@ -79,9 +79,20 @@ module SpreeSquare
     # objects and depends on their `version` token, which none of the
     # SpreePos::Catalog DTOs carry (see #to_snapshot's own comment). That
     # is exactly the B3 debt, and it is deliberately untouched here.
+    #
+    # 2.4.1: also remembers the ids a second listing pass saw
+    # (#extra_present_ids), so CatalogImporter keeps going through this one
+    # contract entry point and a caller that stubs it still works.
     def fetch_all
-      to_snapshot(fetch_raw)
+      raw = fetch_raw
+      @extra_present_ids = raw.second_pass_ids
+      to_snapshot(raw)
     end
+
+    # Ids the paged-listing guard's second pass saw during the last
+    # #fetch_all (see #second_pass_ids). Empty for a one-page listing, or
+    # before #fetch_all has run.
+    def extra_present_ids = Array(@extra_present_ids)
 
     # Square's search is a single page per call; loop on `cursor` until
     # exhausted. Fine for a restaurant-sized catalog (dozens to low hundreds
