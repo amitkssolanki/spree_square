@@ -7,7 +7,16 @@ module SpreeSquare
   # becomes the thin job wrapper; this class owns "how do we talk to
   # Square."
   class CatalogAdapter
-    FetchResult = Struct.new(:categories, :modifier_lists, :taxes, :items, :related_objects_by_id, keyword_init: true)
+    FetchResult = Struct.new(:categories, :modifier_lists, :taxes, :items, :related_objects_by_id, :second_pass_ids,
+                             keyword_init: true)
+
+    # A listing that does not end is not a listing: a cursor that repeats, or
+    # more pages than any restaurant catalog has, raises before anything is
+    # imported or pruned (2.4.1).
+    class IncompleteListing < StandardError; end
+
+    OBJECT_TYPES = %w[ITEM CATEGORY MODIFIER_LIST TAX].freeze
+    MAX_PAGES = 200
 
     # `client:` is resolved LAZILY (B3). It used to default to
     # `SpreeSquare::Client.instance` in the argument list, which meant
@@ -84,23 +93,7 @@ module SpreeSquare
     # needs. Renamed from #fetch_all in Package A so the contract-conforming
     # name could return a Snapshot; the body is unchanged.
     def fetch_raw
-      objects = []
-      related_by_id = {}
-      cursor = nil
-
-      loop do
-        response = client.catalog.search(
-          object_types: %w[ITEM CATEGORY MODIFIER_LIST TAX],
-          include_related_objects: true,
-          cursor: cursor
-        )
-
-        objects.concat(Array(response.objects))
-        Array(response.related_objects).each { |o| related_by_id[o.id] = o }
-
-        cursor = response.cursor
-        break if cursor.blank?
-      end
+      objects, related_by_id, pages = list_all(include_related_objects: true)
 
       by_type = objects.group_by(&:type)
       FetchResult.new(
@@ -108,8 +101,51 @@ module SpreeSquare
         modifier_lists: by_type.fetch('MODIFIER_LIST', []),
         taxes: by_type.fetch('TAX', []),
         items: by_type.fetch('ITEM', []),
-        related_objects_by_id: related_by_id
+        related_objects_by_id: related_by_id,
+        second_pass_ids: pages > 1 ? second_pass_ids : []
       )
+    end
+
+    # Every page, following the cursor to its end. Any API error raises out
+    # of the SDK call itself, so a partial listing never reaches the import.
+    def list_all(include_related_objects:)
+      objects = []
+      related_by_id = {}
+      cursor = nil
+      seen_cursors = []
+      pages = 0
+
+      loop do
+        response = client.catalog.search(
+          object_types: OBJECT_TYPES,
+          include_related_objects: include_related_objects,
+          cursor: cursor
+        )
+        pages += 1
+
+        objects.concat(Array(response.objects))
+        Array(response.related_objects).each { |o| related_by_id[o.id] = o }
+
+        cursor = response.cursor
+        break if cursor.blank?
+        raise IncompleteListing, "Square returned cursor #{cursor.inspect} twice" if seen_cursors.include?(cursor)
+        raise IncompleteListing, "Square catalog listing exceeded #{MAX_PAGES} pages" if pages >= MAX_PAGES
+
+        seen_cursors << cursor
+      end
+
+      [objects, related_by_id, pages]
+    end
+
+    # PAGED LISTINGS AND PRUNING (2.4.1, mirroring spree_clover's OI-162 #9).
+    # If the merchant deletes or adds objects while a listing is being paged,
+    # an object could be missed and would then look deleted until the next
+    # import. So when the listing needed more than one page it is listed a
+    # second time and an id seen by EITHER pass counts as present. A catalog
+    # that fits one page sends exactly the one request it always did.
+    def second_pass_ids
+      objects, = list_all(include_related_objects: false)
+      objects.map(&:id)
     end
 
     # Translates a #fetch_all result into the provider-neutral
@@ -196,6 +232,10 @@ module SpreeSquare
         min_selected: data.min_selected_modifiers,
         max_selected: data.max_selected_modifiers,
         modifiers: Array(data.modifiers).map { |m| modifier_dto(m) },
+        # Square embeds a modifier list's options in the list object itself,
+        # so a list listed with no options really has none (2.4.1; read by
+        # spree_pos 0.6.0.2+ to remove the options of an emptied list).
+        modifiers_complete: true,
         external_version: square_object.version
       )
     end

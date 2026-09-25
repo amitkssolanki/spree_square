@@ -58,6 +58,9 @@ RSpec.describe SpreeSquare::CatalogImporter do
     allow(SpreeSquare::Client).to receive(:for_connection).with(connection).and_return(client)
     allow(client).to receive(:catalog).and_return(catalog_api)
     allow(SpreePos::CatalogSync).to receive(:new).with(connection: connection).and_return(mapper)
+    # 2.4.1: the import ends with a guarded prune (see catalog_importer_prune_spec.rb).
+    allow(mapper).to receive(:prune_missing!).and_return(products: 0, variants: 0, categories: 0)
+    allow(mapper).to receive_messages(warnings: [], proposals: [])
   end
 
   describe '#call' do
@@ -103,6 +106,14 @@ RSpec.describe SpreeSquare::CatalogImporter do
         allow(catalog_api).to receive(:search)
           .with(object_types: %w[ITEM CATEGORY MODIFIER_LIST TAX], include_related_objects: true, cursor: 'page-2')
           .and_return(search_response(objects: item, cursor: nil))
+        # 2.4.1: a listing over one page is listed a second time, ids only,
+        # before anything may be pruned (the paged-listing guard).
+        allow(catalog_api).to receive(:search)
+          .with(object_types: %w[ITEM CATEGORY MODIFIER_LIST TAX], include_related_objects: false, cursor: nil)
+          .and_return(search_response(objects: category + modifier_list + tax, cursor: 'page-2'))
+        allow(catalog_api).to receive(:search)
+          .with(object_types: %w[ITEM CATEGORY MODIFIER_LIST TAX], include_related_objects: false, cursor: 'page-2')
+          .and_return(search_response(objects: item, cursor: nil))
       end
 
       it 'follows the cursor until it is blank, aggregating both pages' do
@@ -113,7 +124,8 @@ RSpec.describe SpreeSquare::CatalogImporter do
 
         result = described_class.call(connection: connection)
 
-        expect(catalog_api).to have_received(:search).twice
+        expect(catalog_api).to have_received(:search)
+          .with(hash_including(include_related_objects: true)).twice
         expect(result.items_count).to eq(item.size)
         expect(result.categories_count).to eq(category.size)
       end

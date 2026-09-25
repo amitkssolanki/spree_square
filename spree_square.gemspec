@@ -68,7 +68,11 @@ Gem::Specification.new do |s|
   # longer registers its own order.completed subscriber at all (item 5 of
   # docs/emberandfork-clover-sandbox-plan.md), so a spree_pos without them would
   # leave Square order pushing completely untriggered, not just degraded.
-  s.add_dependency 'spree_pos', '~> 0.6.0'
+  # 0.6.0.2 (2.4.1): the catalog import prunes what Square no longer lists and
+  # needs CatalogSync#removals_enabled= (the prune cap's switch), the
+  # opt-in category prune and ModifierGroup#modifiers_complete. 0.6.6 and
+  # later also satisfy this; there the cap falls back to refusing the import.
+  s.add_dependency 'spree_pos', '~> 0.6.0', '>= 0.6.0.2'
 
   # Square's official Ruby SDK. Current major (Fern-generated) uses
   # Square::Client.new(token:) / square.orders.create(...) — NOT the legacy

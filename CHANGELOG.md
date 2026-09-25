@@ -2,6 +2,31 @@
 
 All notable changes to this project are documented here.
 
+## 2.4.1
+
+What is deleted in Square now leaves Spree (OI-195). Requires spree_pos `~> 0.6.0, >= 0.6.0.2`. No schema change.
+
+- **The catalog import prunes.** Until 2.4.0 it never called `SpreePos::CatalogSync#prune_missing!` and spree_pos
+  0.6.0.1 never removed an option, so a dish, variation or option deleted in Square stayed on sale in Spree and
+  its id went to Square on the next order. Now, after every object has mapped: items and variations Square no
+  longer lists are discontinued (archived, never deleted, and back if Square lists them again); options a
+  modifier list no longer has are removed (past orders keep their snapshot; `modifiers_complete: true`, since
+  Square embeds a list's options in the list, so an emptied list loses its options); a category Square no longer
+  lists is released, its taxon deleted only when the connection owns everything in it.
+- **Only after a complete listing.** `CatalogAdapter#fetch_raw` pages the whole catalog or raises: any API error,
+  a cursor Square returns twice (`IncompleteListing`), or more than 200 pages. A raise happens before anything
+  is mapped or pruned. A listing that needed more than one page is listed a second time and an id seen by either
+  pass counts as present (spree_clover's OI-162 #9 guard); a one-page catalog sends the one request it always did.
+- **A sanity cap.** `SpreeSquare::CatalogPrunePlan` counts, before anything is written, what would be removed. If
+  any kind (products, variants, modifiers, categories) would lose more than 25% of what the connection has live
+  (and more than 2), no removal of any kind is made on that run: additions and changes still apply, the SyncRun
+  records `removals_withheld: 1` and the message, and an alert (`catalog_prune_cap`) names the counts. An empty
+  listing trips it too. Override per deployment with `SPREE_SQUARE_PRUNE_MAX_FRACTION`, or for one confirmed run
+  with `CatalogImporter.call(connection:, max_prune_fraction: 1.0)`. With a spree_pos that cannot withhold
+  removals, an over-cap import is refused whole (`PruneCapExceeded`).
+- The import's result now carries `products_pruned`, `variants_pruned`, `categories_pruned`, `removals_withheld`,
+  and the sync's `warnings` and `proposals`, so the SyncRun shows them.
+
 ## 2.4.0
 
 Order-push trigger moved to spree_pos (item 5 of docs/emberandfork-clover-sandbox-plan.md). Requires
