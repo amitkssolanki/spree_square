@@ -265,9 +265,10 @@ module SpreeSquare
       data = square_object.item_data
       image_object = related_objects_by_id[data.image_ids&.first]
       category_ids = Array(data.category_id) + Array(data.categories).map(&:id)
-      modifier_group_ids = Array(data.modifier_list_info).reject { |i| i.enabled == false }.map(&:modifier_list_id)
+      enabled_infos = Array(data.modifier_list_info).reject { |i| i.enabled == false }
+      modifier_group_ids = enabled_infos.map(&:modifier_list_id)
 
-      SpreePos::Catalog::Item.new(
+      attributes = {
         external_id: square_object.id,
         name: data.name.presence || 'Untitled item',
         description: data.description,
@@ -278,7 +279,45 @@ module SpreeSquare
         variations: Array(data.variations).map { |v| variation_dto(v) },
         available_at_external_location_ids: available_location_ids(square_object),
         external_version: square_object.version
-      )
+      }
+      # Per-item limits need spree_pos with SpreePos::Catalog::ModifierGroupOverride
+      # (proposed 0.7.0); on an older spree_pos the item converts as before.
+      if PER_ITEM_MODIFIER_LIMITS.call
+        attributes[:modifier_group_overrides] = enabled_infos.filter_map { |info| modifier_group_override(info) }
+      end
+      SpreePos::Catalog::Item.new(**attributes)
+    end
+
+    PER_ITEM_MODIFIER_LIMITS = lambda do
+      SpreePos::Catalog::Item.members.include?(:modifier_group_overrides) &&
+        defined?(SpreePos::Catalog::ModifierGroupOverride)
+    end
+
+    # An item's own selection limits for one of its modifier lists
+    # (CatalogItemModifierListInfo.min_selected_modifiers /
+    # max_selected_modifiers), translated into SpreePos's neutral meaning
+    # (SpreePos::Catalog::ModifierGroupOverride: nil = the list's rule,
+    # 0 = explicitly none, >0 = the limit). Square's documented values:
+    #
+    #   absent or -1  "not set by the client". When BOTH are not set, the
+    #                 list's own min/max apply, so there is no override (nil).
+    #                 When only one is set, the unset one is left nil, so the
+    #                 list's value still applies to it (Square documents only
+    #                 the both-unset case; this keeps a list's requirement
+    #                 rather than silently dropping it).
+    #   0             no minimum / no maximum (an explicit override)
+    #   >0            the item's minimum / maximum
+    #   < -1          invalid, documented as "treated as" no minimum / no
+    #                 maximum, so 0
+    #
+    # https://developer.squareup.com/reference/square/objects/CatalogItemModifierListInfo
+    def modifier_group_override(info)
+      min = override_limit(info.min_selected_modifiers)
+      max = override_limit(info.max_selected_modifiers)
+      return nil if min.nil? && max.nil?
+
+      SpreePos::Catalog::ModifierGroupOverride.new(modifier_group_external_id: info.modifier_list_id,
+                                                   min_selected: min, max_selected: max)
     end
 
     def variation_dto(square_object)
@@ -294,6 +333,12 @@ module SpreeSquare
     end
 
     private
+
+    def override_limit(value)
+      return nil if value.nil? || value == -1
+
+      value.negative? ? 0 : value
+    end
 
     # Square's location availability lives on the OUTER catalog object
     # (CatalogObjectBase#present_at_all_locations / #present_at_location_ids

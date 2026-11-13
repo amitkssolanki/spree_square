@@ -2,6 +2,17 @@
 
 All notable changes to this project are documented here.
 
+## Unreleased (local branch feature/item-modifier-limits, not released)
+
+- **An item's own modifier limits reach spree_pos.** `CatalogAdapter#item_dto` maps each enabled
+  `modifier_list_info[]`'s `min_selected_modifiers` / `max_selected_modifiers` into
+  `SpreePos::Catalog::ModifierGroupOverride` (`Item#modifier_group_overrides`), following
+  [CatalogItemModifierListInfo](https://developer.squareup.com/reference/square/objects/CatalogItemModifierListInfo):
+  both -1 or absent = no override (the list applies); one -1 = that field left to the list; 0 = no
+  minimum / no maximum; >0 = the limit; < -1 = invalid, treated as 0. A list disabled on the item
+  (`enabled: false`) is still dropped with its override. Needs spree_pos with per-item limits
+  (proposed 0.7.0); on an older spree_pos the item converts exactly as before.
+
 ## 2.4.2
 
 Same behaviour as 2.4.1; deploy this one, not 2.4.1. No schema change.
