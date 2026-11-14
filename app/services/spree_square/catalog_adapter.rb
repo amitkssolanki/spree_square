@@ -281,7 +281,7 @@ module SpreeSquare
         external_version: square_object.version
       }
       # Per-item limits need spree_pos with SpreePos::Catalog::ModifierGroupOverride
-      # (proposed 0.7.0); on an older spree_pos the item converts as before.
+      # (0.6.10); on an older spree_pos the item converts as before.
       if PER_ITEM_MODIFIER_LIMITS.call
         attributes[:modifier_group_overrides] = enabled_infos.filter_map { |info| modifier_group_override(info) }
       end

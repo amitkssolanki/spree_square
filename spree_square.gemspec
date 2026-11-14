@@ -72,7 +72,12 @@ Gem::Specification.new do |s|
   # needs CatalogSync#removals_enabled= (the prune cap's switch), the
   # opt-in category prune and ModifierGroup#modifiers_complete. 0.6.6 and
   # later also satisfy this; there the cap falls back to refusing the import.
-  s.add_dependency 'spree_pos', '~> 0.6.0', '>= 0.6.0.2'
+  # 0.6.10 (2.5.0): per-item modifier selection limits
+  # (SpreePos::Catalog::ModifierGroupOverride, Item#modifier_group_overrides and
+  # the two spree_pos_product_modifier_lists columns), which the catalog
+  # adapter now fills from modifier_list_info min/max. Same `~> 0.6` upper
+  # bound as before, so spree_clover 0.5.4.1 (`~> 0.6.7`) can share it.
+  s.add_dependency 'spree_pos', '~> 0.6.0', '>= 0.6.10'
 
   # Square's official Ruby SDK. Current major (Fern-generated) uses
   # Square::Client.new(token:) / square.orders.create(...) — NOT the legacy

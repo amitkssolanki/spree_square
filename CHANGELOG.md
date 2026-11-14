@@ -2,7 +2,11 @@
 
 All notable changes to this project are documented here.
 
-## Unreleased (local branch feature/item-modifier-limits, not released)
+## 2.5.0
+
+Per-item modifier limits. Requires spree_pos `~> 0.6.0, >= 0.6.10` (its migration
+`add_selection_limits_to_pos_product_modifier_lists` must be installed and run in the host). No schema change of its
+own.
 
 - **An item's own modifier limits reach spree_pos.** `CatalogAdapter#item_dto` maps each enabled
   `modifier_list_info[]`'s `min_selected_modifiers` / `max_selected_modifiers` into
@@ -10,8 +14,8 @@ All notable changes to this project are documented here.
   [CatalogItemModifierListInfo](https://developer.squareup.com/reference/square/objects/CatalogItemModifierListInfo):
   both -1 or absent = no override (the list applies); one -1 = that field left to the list; 0 = no
   minimum / no maximum; >0 = the limit; < -1 = invalid, treated as 0. A list disabled on the item
-  (`enabled: false`) is still dropped with its override. Needs spree_pos with per-item limits
-  (proposed 0.7.0); on an older spree_pos the item converts exactly as before.
+  (`enabled: false`) is still dropped with its override. Needs spree_pos 0.6.10 or later (per-item
+  limits), now required by the gemspec.
 
 ## 2.4.2
 
